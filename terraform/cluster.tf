@@ -15,11 +15,11 @@ resource "autoglue_ssh_key" "bastion" {
 
 
 resource "autoglue_cluster" "cluster" {
-    cluster_provider = "hetzner"
-    docker_image = "ghcr.io/glueops/gluekube"
-    docker_tag = "v0.0.10"
-    name = "demo"
-    region = "hl1"
+  cluster_provider = "aws"
+  docker_image = var.gluekube_docker_image
+  docker_tag = var.gluekube_docker_tag
+  name = var.autoglue_cluster_name
+  region = var.aws_region
 }
 
 

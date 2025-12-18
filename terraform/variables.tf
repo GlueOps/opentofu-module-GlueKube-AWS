@@ -56,6 +56,12 @@ variable "autoglue_org_secret" {
   sensitive = true
 }
 
+variable "autoglue_cluster_name" {
+  type = string
+  default = "demo"
+}
+
+
 variable "zone_id" {
   type = string
   sensitive = true
@@ -86,3 +92,14 @@ variable "aws_secret_access_key" {
   type = string
   sensitive = true
 }
+
+variable "gluekube_docker_image" {
+  type = string
+  default = "ghcr.io/glueops/gluekube"
+}
+
+variable "gluekube_docker_tag" {
+  type = string
+  default = "v0.0.9"
+}
+
