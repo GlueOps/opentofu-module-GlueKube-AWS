@@ -34,6 +34,9 @@ The module follows the same pattern as the HetznerCloud module:
 ## Usage
 
 ```hcl
+locals {
+azs = ["us-west-2a", "us-west-2b", "us-west-2a"]
+}
 module "gluekube_aws" {
   source = "./opentofu-module-GlueKube-AWS"
 
@@ -46,7 +49,7 @@ module "gluekube_aws" {
 
   region          = "us-west-2"
   vpc_cidr_block  = "10.0.0.0/16"
-  
+  azs = local.azs
   # Public subnets across 3 AZs
   public_subnet_cidrs  = ["10.0.1.0/24", "10.0.2.0/24", "10.0.3.0/24"]
   
@@ -56,6 +59,7 @@ module "gluekube_aws" {
   bastion = {
     instance_type = "t3a.small"
     image         = ""  # Uses latest Ubuntu 24.04
+    enabled = true
   }
 
   autoglue = {
@@ -82,6 +86,7 @@ module "gluekube_aws" {
       name              = "masters"
       image             = ""  # Uses latest Ubuntu 24.04
       node_count        = 3
+      azs =             local.azs
       instance_type     = "t3a.xlarge"
       role              = "master"
       kubernetes_labels = {}
@@ -91,6 +96,8 @@ module "gluekube_aws" {
       name              = "workers"
       image             = ""
       node_count        = 3
+      azs =             [us-west-2a, us-west-2b]
+
       instance_type     = "t3a.xlarge"
       role              = "worker"
       kubernetes_labels = {
