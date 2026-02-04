@@ -4,6 +4,7 @@ variable "provider_credentials" {
     access_key      = string
     secret_key      = string
     region          = string
+    session_token   = optional(string)
   })
   description = "AWS provider credentials configuration"
 }
@@ -35,25 +36,12 @@ variable "vpc_cidr_block" {
   }
 }
 
-variable "public_subnet_cidrs" {
-  type        = list(string)
-  description = "List of public subnet CIDR blocks (one per AZ, 3 total)"
-  default     = ["10.0.1.0/24", "10.0.2.0/24", "10.0.3.0/24"]
-  validation {
-    condition     = length(var.public_subnet_cidrs) == 3
-    error_message = "Exactly 3 public subnet CIDRs must be provided for 3 AZs."
-  }
+variable "subnet_cidr" {
+  type        = string
+  description = "Public subnet CIDR for the single availability zone"
 }
 
-variable "private_subnet_cidrs" {
-  type        = list(string)
-  description = "List of private subnet CIDR blocks (one per AZ, 3 total)"
-  default     = ["10.0.11.0/24", "10.0.12.0/24", "10.0.13.0/24"]
-  validation {
-    condition     = length(var.private_subnet_cidrs) == 3
-    error_message = "Exactly 3 private subnet CIDRs must be provided for 3 AZs."
-  }
-}
+
 
 variable "bastion" {
   description = "Bastion configuration."

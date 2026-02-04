@@ -15,6 +15,7 @@ provider "aws" {
   region     = var.provider_credentials.region
   access_key = var.provider_credentials.access_key
   secret_key = var.provider_credentials.secret_key
+  token      = var.provider_credentials.session_token
 }
 
 provider "autoglue" {
