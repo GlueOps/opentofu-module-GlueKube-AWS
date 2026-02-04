@@ -45,3 +45,5 @@ hosts.ini
 .env
 
 **/inventory/*.yaml
+# Old terraform directory (deprecated)
+terraform/

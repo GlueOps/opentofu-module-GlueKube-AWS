@@ -1,0 +1,14 @@
+#cloud-config
+packages:
+  - curl
+hostname: ${hostname}
+ssh_pwauth: true
+chpasswd:
+  expire: false
+users:
+  - name: cluster
+    groups: sudo
+    ssh_authorized_keys:
+      - ${public_key}
+    sudo: ALL=(ALL) NOPASSWD:ALL
+    shell: /bin/bash
