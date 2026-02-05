@@ -47,7 +47,7 @@ module "gluekube_aws" {
   region          = "us-west-2"
   vpc_cidr_block  = "10.0.0.0/16" Rate of 1:5:2 PUBLIC:Private:Isolated
   
-  azs = [ "us-west-2a", "us-west-2b", "us-west-2c" ]
+  availability_zone = [ "us-west-2a", "us-west-2b", "us-west-2c" ]
 
   bastion = {
     instance_type = "t3a.small"
@@ -91,6 +91,8 @@ module "gluekube_aws" {
       role              = "worker"
       kubernetes_labels = {
         "node-role" = "worker"
+        "availability-zone" = local.availability_zone
+        "subnet" = "public"
       }
       kubernetes_taints = []
     }
