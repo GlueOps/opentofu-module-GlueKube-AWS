@@ -47,11 +47,7 @@ module "gluekube_aws" {
   region          = "us-west-2"
   vpc_cidr_block  = "10.0.0.0/16" Rate of 1:5:2 PUBLIC:Private:Isolated
   
-  # Public subnets across 3 AZs
-  public_subnet_cidrs  = ["10.0.1.0/24", "10.0.2.0/24", "10.0.3.0/24"] 
-  
-  # Private subnets across 3 AZs
-  private_subnet_cidrs = ["10.0.11.0/24", "10.0.12.0/24", "10.0.13.0/24"]
+  azs = [ "us-west-2a", "us-west-2b", "us-west-2c" ]
 
   bastion = {
     instance_type = "t3a.small"
