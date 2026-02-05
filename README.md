@@ -91,7 +91,7 @@ module "gluekube_aws" {
       role              = "worker"
       kubernetes_labels = {
         "node-role" = "worker"
-        "availability-zone" = local.availability_zone
+        "availability_zone" = local.availability_zone
         "subnet" = "public"
       }
       kubernetes_taints = []
