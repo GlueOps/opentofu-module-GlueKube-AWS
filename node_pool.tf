@@ -9,7 +9,7 @@ module "node_pool" {
   kubernetes_labels = each.value.kubernetes_labels
   kubernetes_taints = each.value.kubernetes_taints
   vpc_id            = module.vpc.vpc_id
-  subnet_ids        = module.vpc.public_subnets
+  subnet_ids        = each.value.subnet == "public" ? module.vpc.public_subnets : (each.value.subnet == "intra" ? module.vpc.intra_subnets : module.vpc.private_subnets)
   vpc_cidr          = var.vpc_cidr_block
   cluster_name      = var.autoglue.autoglue_cluster_name
   region            = var.region

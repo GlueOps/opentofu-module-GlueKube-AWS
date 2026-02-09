@@ -36,9 +36,13 @@ variable "vpc_cidr_block" {
   }
 }
 
-variable "subnet_cidr" {
-  type        = string
-  description = "Public subnet CIDR for the single availability zone"
+variable "azs" {
+  type        = list(string)
+  description = "List of availability zones for subnet distribution"
+  validation {
+    condition     = length(var.azs) > 0
+    error_message = "At least one availability zone must be specified."
+  }
 }
 
 
@@ -80,6 +84,7 @@ variable "node_pools" {
     node_count        = number
     instance_type     = string
     role              = string
+    subnet            = optional(string, "private")
     kubernetes_labels = map(string)
     kubernetes_taints = list(object({
       key    = string
@@ -98,5 +103,10 @@ variable "node_pools" {
   validation {
     condition     = sum([for np in var.node_pools : np.node_count if np.role == "master"]) % 2 == 1
     error_message = "The sum of node_count for all master node pools must be odd for proper etcd quorum."
+  }
+
+  validation {
+    condition     = alltrue([for np in var.node_pools : contains(["public", "private", "intra"], np.subnet)])
+    error_message = "subnet must be one of: public, private, or intra."
   }
 }

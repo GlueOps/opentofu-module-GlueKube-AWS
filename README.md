@@ -5,7 +5,8 @@ OpenTofu/Terraform module for deploying GlueKube clusters on AWS.
 ## Overview
 
 This module creates a complete GlueKube Kubernetes cluster infrastructure on AWS, including:
-- VPC with public and private subnets across 3 availability zones
+- VPC with public, private, and intra subnets automatically distributed across availability zones
+- Automatic CIDR block subdivision for optimal subnet allocation
 - NAT gateways (one per AZ) for high availability
 - EC2 instances distributed across multiple AZs
 - Bastion server for secure access
@@ -19,7 +20,7 @@ The module follows the same pattern as the HetznerCloud module:
 
 - `provider.tf` - Provider configuration for AWS and AutoGlue
 - `variables.tf` - Input variables
-- `network.tf` - VPC module configuration (3 AZs, NAT gateways)
+- `network.tf` - VPC module configuration with automatic subnet CIDR calculation
 - `bastion.tf` - Bastion server configuration
 - `cluster.tf` - AutoGlue cluster and domain configuration
 - `node_pool.tf` - Node pool module invocation
@@ -47,11 +48,8 @@ module "gluekube_aws" {
   region          = "us-west-2"
   vpc_cidr_block  = "10.0.0.0/16"
   
-  # Public subnets across 3 AZs
-  public_subnet_cidrs  = ["10.0.1.0/24", "10.0.2.0/24", "10.0.3.0/24"]
-  
-  # Private subnets across 3 AZs
-  private_subnet_cidrs = ["10.0.11.0/24", "10.0.12.0/24", "10.0.13.0/24"]
+  # Availability zones - subnets will be automatically distributed
+  azs = ["us-west-2a", "us-west-2b", "us-west-2c"]
 
   bastion = {
     instance_type = "t3a.small"
@@ -110,7 +108,8 @@ module "gluekube_aws" {
 
 ## Features
 
-- **High Availability**: Resources distributed across 3 availability zones
+- **High Availability**: Resources distributed across configurable availability zones
+- **Automatic Subnet Allocation**: CIDR blocks automatically calculated from VPC CIDR for public, private, and intra subnets
 - **VPC Module**: Uses official AWS VPC module for best practices
 - **NAT Gateways**: One NAT gateway per AZ for fault tolerance
 - **Modular Design**: Node pools are created using a reusable module pattern
