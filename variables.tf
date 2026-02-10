@@ -110,3 +110,11 @@ variable "node_pools" {
     error_message = "subnet must be one of: public, private, or intra."
   }
 }
+variable "peering_configs" {
+  description = "A list of maps containing VPC peering configuration details"
+  type = list(object({
+    vpc_peering_connection_id = string
+    destination_cidr_block    = string
+  }))
+  default = []
+}
