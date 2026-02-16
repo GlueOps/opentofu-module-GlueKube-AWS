@@ -26,10 +26,13 @@ resource "aws_vpc_peering_connection_accepter" "accepter" {
   auto_accept               = true
 }
 
+
+# Generate a static key for each route using indices
 locals {
   peering_routes = flatten([
-    for pc in var.peering_configs : [
-      for rt_id in var.route_table_ids : {
+    for pc_idx, pc in var.peering_configs : [
+      for rt_idx, rt_id in var.route_table_ids : {
+        key = "${pc_idx}-${rt_idx}"
         vpc_peering_connection_id = pc.vpc_peering_connection_id
         destination_cidr_block    = pc.destination_cidr_block
         route_table_id            = rt_id
@@ -41,7 +44,7 @@ locals {
 resource "aws_route" "peering_routes" {
   for_each = {
     for pr in local.peering_routes :
-    "${pr.vpc_peering_connection_id}-${pr.route_table_id}" => pr
+    pr.key => pr
   }
 
   route_table_id            = each.value.route_table_id

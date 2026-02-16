@@ -52,6 +52,7 @@ variable "bastion" {
   type = object({
     instance_type = string
     image         = string
+    create        = optional(bool, true)
   })
 }
 
@@ -115,6 +116,7 @@ variable "peering_configs" {
   type = list(object({
     vpc_peering_connection_id = string
     destination_cidr_block    = string
+    include_intra_routes   = optional(bool, false)
   }))
   default = []
 }
