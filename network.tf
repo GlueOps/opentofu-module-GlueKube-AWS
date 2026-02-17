@@ -6,7 +6,7 @@ locals {
   # Calculate the number of bits needed to divide the VPC CIDR
   # For public/private/intra subnets across multiple AZs
   az_count = length(var.azs)
-  
+
   # Calculate subnet CIDRs for each AZ
   # This creates equally sized subnets for public, private, and intra networks
   public_subnet_cidrs  = [for i in range(local.az_count) : cidrsubnet(var.vpc_cidr_block, 4, i)]
@@ -77,8 +77,8 @@ module "vpc_endpoints" {
       dns_options = {
         private_dns_only_for_inbound_resolver_endpoint = false
       }
-      subnet_ids          = module.vpc.intra_subnets
-      tags = { Name = "s3-vpc-endpoint" }
+      subnet_ids = module.vpc.intra_subnets
+      tags       = { Name = "s3-vpc-endpoint" }
     },
     # ecr_api = {
     #   service             = "ecr.api"
@@ -94,5 +94,5 @@ module "vpc_endpoints" {
     # },
   }
 
-  
+
 }

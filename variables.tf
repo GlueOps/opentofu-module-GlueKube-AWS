@@ -1,10 +1,10 @@
 variable "provider_credentials" {
   type = object({
-    name            = string
-    access_key      = string
-    secret_key      = string
-    region          = string
-    session_token   = optional(string)
+    name          = string
+    access_key    = string
+    secret_key    = string
+    region        = string
+    session_token = optional(string)
   })
   description = "AWS provider credentials configuration"
 }
@@ -116,7 +116,7 @@ variable "peering_configs" {
   type = list(object({
     vpc_peering_connection_id = string
     destination_cidr_block    = string
-    include_intra_routes   = optional(bool, false)
+    include_intra_routes      = optional(bool, false)
   }))
   default = []
 }

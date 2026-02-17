@@ -15,6 +15,7 @@ data "aws_ami" "ubuntu" {
 }
 
 resource "autoglue_ssh_key" "bastion" {
+  count   = var.bastion.create ? 1 : 0
   name    = "${var.autoglue.autoglue_cluster_name}-bastion"
   comment = "GlueKube bastion SSH Key"
 }
@@ -53,7 +54,7 @@ resource "aws_instance" "bastion" {
   vpc_security_group_ids = var.bastion.create ? [aws_security_group.bastion[0].id] : []
 
   user_data_base64 = base64encode(templatefile("${path.module}/cloudinit/cloud-init-bastion.yaml", {
-    public_key = autoglue_ssh_key.bastion.public_key
+    public_key = autoglue_ssh_key.bastion[0].public_key
     hostname   = "bastion"
   }))
 
@@ -69,13 +70,13 @@ resource "aws_instance" "bastion" {
 }
 
 resource "autoglue_server" "bastion" {
-  count               = var.bastion.create ? 1 : 0
-  hostname            = "bastion"
-  public_ip_address   = var.bastion.create ? aws_instance.bastion[0].public_ip : null
-  private_ip_address  = var.bastion.create ? aws_instance.bastion[0].private_ip : null
-  role                = "bastion"
-  ssh_key_id          = autoglue_ssh_key.bastion.id
-  ssh_user            = "cluster"
+  count              = var.bastion.create ? 1 : 0
+  hostname           = "bastion"
+  public_ip_address  = var.bastion.create ? aws_instance.bastion[0].public_ip : null
+  private_ip_address = var.bastion.create ? aws_instance.bastion[0].private_ip : null
+  role               = "bastion"
+  ssh_key_id         = autoglue_ssh_key.bastion[0].id
+  ssh_user           = "cluster"
 }
 
 resource "autoglue_cluster_bastion" "bastion" {

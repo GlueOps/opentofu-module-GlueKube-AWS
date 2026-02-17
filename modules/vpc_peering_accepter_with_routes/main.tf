@@ -3,6 +3,7 @@ variable "peering_configs" {
   type = list(object({
     vpc_peering_connection_id = string
     destination_cidr_block    = string
+    include_intra_routes      = optional(bool, false)
   }))
   default = []
 }
@@ -27,12 +28,13 @@ resource "aws_vpc_peering_connection_accepter" "accepter" {
 }
 
 
-# Generate a static key for each route using indices
+
+# Generate a stable key for each route using immutable values
 locals {
   peering_routes = flatten([
-    for pc_idx, pc in var.peering_configs : [
-      for rt_idx, rt_id in var.route_table_ids : {
-        key = "${pc_idx}-${rt_idx}"
+    for pc in var.peering_configs : [
+      for rt_id in var.route_table_ids : {
+        key                       = join(",", [pc.vpc_peering_connection_id, pc.destination_cidr_block, rt_id])
         vpc_peering_connection_id = pc.vpc_peering_connection_id
         destination_cidr_block    = pc.destination_cidr_block
         route_table_id            = rt_id
