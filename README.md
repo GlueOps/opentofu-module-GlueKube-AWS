@@ -35,66 +35,89 @@ The module follows the same pattern as the HetznerCloud module:
 ## Usage
 
 ```hcl
-module "gluekube_aws" {
-  source = "./opentofu-module-GlueKube-AWS"
+module "captain" {
+  source                = "https://github.com/GlueOps/opentofu-module-GlueKube-AWS.git"
+  gluekube_docker_image = "ghcr.io/glueops/gluekube"
+  gluekube_docker_tag   = "v1.33.7-gluekube.4"
+  vpc_cidr_block        = "10.0.0.0/16"
+  azs                   = ["us-west-2a", "us-west-2b", "us-west-2c"]
+  region                = var.provider_credentials.region
 
-  provider_credentials = {
-    name       = "aws"
-    access_key = var.aws_access_key_id
-    secret_key = var.aws_secret_access_key
-    region     = "us-west-2"
-  }
-
-  region          = "us-west-2"
-  vpc_cidr_block  = "10.0.0.0/16"
-  
-  # Availability zones - subnets will be automatically distributed
-  azs = ["us-west-2a", "us-west-2b", "us-west-2c"]
-
-  bastion = {
-    instance_type = "t3a.small"
-    image         = ""  # Uses latest Ubuntu 24.04
-  }
-
+  provider_credentials = var.provider_credentials
   autoglue = {
-    autoglue_cluster_name = "my-cluster"
+    autoglue_cluster_name = var.autoglue_cluster_name
 
     credentials = {
       autoglue_key        = var.autoglue_key
       autoglue_org_secret = var.autoglue_org_secret
-      base_url            = "https://autoglue.glueopshosted.com/api/v1"
+      base_url            = var.autoglue_base_url
     }
-
     route_53_config = {
-      aws_access_key_id     = var.route53_access_key
-      aws_secret_access_key = var.route53_secret_key
-      aws_region            = "us-west-2"
-      domain_name           = "example.com"
-      zone_id               = "Z1234567890ABC"
-      credential_id         = "cred-123"
+      aws_access_key_id     = var.aws_access_key_id
+      aws_secret_access_key = var.aws_secret_access_key
+      aws_region            = var.route53_region
+      domain_name           = var.domain_name
+      zone_id               = var.route53_zone_id
+      credential_id         = var.autoglue_credentials_id
     }
+  }
+  bastion = {
+    instance_type = "t3a.medium"
+    image         = "ami-0786adace1541ca80"
+    create        = true
   }
 
   node_pools = [
     {
-      name              = "masters"
-      image             = ""  # Uses latest Ubuntu 24.04
-      node_count        = 3
-      instance_type     = "t3a.xlarge"
-      role              = "master"
-      kubernetes_labels = {}
-      kubernetes_taints = []
+      "instance_type" : "t3a.medium",
+      "role" : "master",
+      "name" : "master-node-pool-1",
+      "image" : "ami-0786adace1541ca80",
+      "node_count" : 3,
+      "subnet" : "private",
+      "kubernetes_labels" : {},
+      "kubernetes_taints" : []
     },
     {
-      name              = "workers"
-      image             = ""
-      node_count        = 3
-      instance_type     = "t3a.xlarge"
-      role              = "worker"
-      kubernetes_labels = {
-        "node-role" = "worker"
-      }
-      kubernetes_taints = []
+      "instance_type" : "t3a.medium",
+      "role" : "worker",
+      "name" : "glueops-platform-node-pool-4",
+      "image" : "ami-0786adace1541ca80",
+      "subnet" : "public",
+      "node_count" : 4,
+
+      "kubernetes_labels" : {
+        "glueops.dev/role" : "glueops-platform"
+        "use-as-loadbalancer" : "platform",
+      },
+      "kubernetes_taints" : [
+        {
+          key    = "glueops.dev/role"
+          value  = "glueops-platform"
+          effect = "NoSchedule"
+        }
+      ]
+    },
+    {
+      "instance_type" : "t3a.medium",
+      "role" : "worker",
+      "name" : "clusterwide-node-pool-4",
+      "image" : "ami-0786adace1541ca80",
+      "subnet" : "public",
+      "node_count" : 1,
+
+      "kubernetes_labels" : {
+        "use-as-loadbalancer" : "public"
+
+      },
+      "kubernetes_taints" : []
+    },
+  ]
+  peering_configs = [
+    {
+      vpc_peering_connection_id = "pcx-xxxxxx"
+      destination_cidr_block    = "10.65.0.0/26"
+      include_intra_routes      = true
     }
   ]
 }
