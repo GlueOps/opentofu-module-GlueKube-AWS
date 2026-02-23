@@ -29,12 +29,12 @@ resource "aws_vpc_peering_connection_accepter" "accepter" {
 
 
 
-# Generate a stable key for each route using immutable values
+# Generate a stable key for each route using indices (known at plan time)
 locals {
   peering_routes = flatten([
-    for pc in var.peering_configs : [
-      for rt_id in var.route_table_ids : {
-        key                       = join(",", [pc.vpc_peering_connection_id, pc.destination_cidr_block, rt_id])
+    for pc_idx, pc in var.peering_configs : [
+      for rt_idx, rt_id in var.route_table_ids : {
+        key                       = "${pc_idx}-${rt_idx}"
         vpc_peering_connection_id = pc.vpc_peering_connection_id
         destination_cidr_block    = pc.destination_cidr_block
         route_table_id            = rt_id
