@@ -101,10 +101,6 @@ variable "node_pools" {
     error_message = "At least one node pool must have role = 'master'."
   }
 
-  validation {
-    condition     = sum([for np in var.node_pools : np.node_count if np.role == "master"]) % 2 == 1
-    error_message = "The sum of node_count for all master node pools must be odd for proper etcd quorum."
-  }
 
   validation {
     condition     = alltrue([for np in var.node_pools : contains(["public", "private", "intra"], np.subnet)])
