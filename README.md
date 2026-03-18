@@ -38,7 +38,7 @@ The module follows the same pattern as the HetznerCloud module:
 module "captain" {
   source                = "git::https://github.com/GlueOps/opentofu-module-GlueKube-AWS.git"
   gluekube_docker_image = "ghcr.io/glueops/gluekube"
-  gluekube_docker_tag   = "v1.33.7-gluekube.4"
+  gluekube_docker_tag   = "v1.34.5-gluekube.1"
   vpc_cidr_block        = "10.0.0.0/16"
   azs                   = ["us-west-2a", "us-west-2b", "us-west-2c"]
   region                = var.provider_credentials.region
@@ -73,7 +73,7 @@ module "captain" {
       "role" : "master",
       "name" : "master-node-pool-1",
       "image" : "ami-0786adace1541ca80",
-      "node_count" : 3,
+      "node_count" : 1,
       "subnet" : "private",
       "kubernetes_labels" : {},
       "kubernetes_taints" : []
@@ -84,11 +84,11 @@ module "captain" {
       "name" : "glueops-platform-node-pool-4",
       "image" : "ami-0786adace1541ca80",
       "subnet" : "public",
-      "node_count" : 4,
+      "node_count" : 3,
 
       "kubernetes_labels" : {
+        "use-as-loadbalancer" : "platform-traefik",
         "glueops.dev/role" : "glueops-platform"
-        "use-as-loadbalancer" : "platform",
       },
       "kubernetes_taints" : [
         {
@@ -107,8 +107,7 @@ module "captain" {
       "node_count" : 1,
 
       "kubernetes_labels" : {
-        "use-as-loadbalancer" : "public"
-
+        "use-as-loadbalancer" : "public-traefik"
       },
       "kubernetes_taints" : []
     },
