@@ -21,7 +21,12 @@ variable "instance_type" {
 variable "storage_size_gb" {
   type        = number
   description = "The size of the storage in GB"
-  default     = 30
+  nullable    = false
+
+  validation {
+    condition     = var.storage_size_gb > 0
+    error_message = "storage_size_gb must be a positive number of gigabytes."
+  }
 }
 
 variable "image" {
