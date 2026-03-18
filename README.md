@@ -69,7 +69,7 @@ module "captain" {
 
   node_pools = [
     {
-      "instance_type" : "t3a.medium",
+      "instance_type" : "c6a.large",
       "role" : "master",
       "name" : "master-node-pool-1",
       "image" : "ami-0786adace1541ca80",
@@ -79,7 +79,7 @@ module "captain" {
       "kubernetes_taints" : []
     },
     {
-      "instance_type" : "t3a.medium",
+      "instance_type" : "c6a.large",
       "role" : "worker",
       "name" : "glueops-platform-node-pool-4",
       "image" : "ami-0786adace1541ca80",
@@ -99,7 +99,7 @@ module "captain" {
       ]
     },
     {
-      "instance_type" : "t3a.medium",
+      "instance_type" : "c6a.large",
       "role" : "worker",
       "name" : "clusterwide-node-pool-4",
       "image" : "ami-0786adace1541ca80",
