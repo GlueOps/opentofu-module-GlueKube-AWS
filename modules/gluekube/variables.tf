@@ -18,6 +18,11 @@ variable "instance_type" {
   description = "The EC2 instance type"
 }
 
+variable "storage_size_gb" {
+  type        = number
+  description = "The size of the storage in GB"
+}
+
 variable "image" {
   type        = string
   description = "The AMI ID to use for the instances"

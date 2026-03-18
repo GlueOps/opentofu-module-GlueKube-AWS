@@ -84,6 +84,7 @@ variable "node_pools" {
     image             = string
     node_count        = number
     instance_type     = string
+    storage_size_gb   = optional(number, 30)
     role              = string
     subnet            = optional(string, "private")
     kubernetes_labels = map(string)
