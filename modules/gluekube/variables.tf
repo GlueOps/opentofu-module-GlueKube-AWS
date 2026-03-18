@@ -18,6 +18,17 @@ variable "instance_type" {
   description = "The EC2 instance type"
 }
 
+variable "storage_size_gb" {
+  type        = number
+  description = "The size of the storage in GB"
+  nullable    = false
+
+  validation {
+    condition     = var.storage_size_gb > 0
+    error_message = "storage_size_gb must be a positive number of gigabytes."
+  }
+}
+
 variable "image" {
   type        = string
   description = "The AMI ID to use for the instances"

@@ -3,6 +3,7 @@ module "node_pool" {
   source            = "./modules/gluekube"
   name              = each.value.name
   instance_type     = each.value.instance_type
+  storage_size_gb   = each.value.storage_size_gb
   image             = each.value.image
   role              = each.value.role
   node_count        = each.value.node_count

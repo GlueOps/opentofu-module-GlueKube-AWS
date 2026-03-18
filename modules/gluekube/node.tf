@@ -98,7 +98,7 @@ resource "aws_instance" "cluster_node" {
   }))
 
   root_block_device {
-    volume_size = 30
+    volume_size = var.storage_size_gb
     volume_type = "gp3"
   }
 
