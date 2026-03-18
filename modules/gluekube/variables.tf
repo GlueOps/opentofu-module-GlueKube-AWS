@@ -21,6 +21,7 @@ variable "instance_type" {
 variable "storage_size_gb" {
   type        = number
   description = "The size of the storage in GB"
+  default     = 30
 }
 
 variable "image" {
