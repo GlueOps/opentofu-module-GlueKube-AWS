@@ -45,7 +45,11 @@ variable "azs" {
   }
 }
 
-
+variable "enable_nat_gateway" {
+  type        = bool
+  description = "Whether to enable NAT Gateway"
+  default     = true
+}
 
 variable "bastion" {
   description = "Bastion configuration."
