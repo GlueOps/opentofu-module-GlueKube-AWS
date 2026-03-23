@@ -84,14 +84,15 @@ variable "autoglue" {
 
 variable "node_pools" {
   type = list(object({
-    name              = string
-    image             = string
-    node_count        = number
-    instance_type     = string
-    storage_size_gb   = optional(number, 30)
-    role              = string
-    subnet            = optional(string, "private")
-    kubernetes_labels = map(string)
+    name                   = string
+    image                  = string
+    node_count             = number
+    instance_type          = string
+    storage_size_gb        = optional(number, 30)
+    role                   = string
+    subnet                 = optional(string, "private")
+    kubernetes_labels      = optional(map(string), {})
+    kubernetes_annotations = optional(map(string), {})
     kubernetes_taints = list(object({
       key    = string
       value  = string

@@ -57,6 +57,12 @@ variable "kubernetes_labels" {
   description = "Kubernetes labels to apply to the nodes"
 }
 
+variable "kubernetes_annotations" {
+  type        = map(string)
+  description = "Kubernetes annotations to apply to the nodes"
+  default     = {}
+}
+
 variable "kubernetes_taints" {
   type = list(object({
     key    = string
