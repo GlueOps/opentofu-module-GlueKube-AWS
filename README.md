@@ -148,14 +148,14 @@ Managed by github-org-manager
 
 | Name | Version |
 |------|---------|
-| <a name="requirement_autoglue"></a> [autoglue](#requirement\_autoglue) | 0.10.5 |
+| <a name="requirement_autoglue"></a> [autoglue](#requirement\_autoglue) | 0.10.6 |
 | <a name="requirement_aws"></a> [aws](#requirement\_aws) | ~> 6.0 |
 
 ## Providers
 
 | Name | Version |
 |------|---------|
-| <a name="provider_autoglue"></a> [autoglue](#provider\_autoglue) | 0.10.5 |
+| <a name="provider_autoglue"></a> [autoglue](#provider\_autoglue) | 0.10.6 |
 | <a name="provider_aws"></a> [aws](#provider\_aws) | ~> 6.0 |
 
 ## Modules
