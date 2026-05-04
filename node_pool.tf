@@ -14,12 +14,13 @@ module "node_pool" {
   subnet_ids             = each.value.subnet == "public" ? module.vpc.public_subnets : (each.value.subnet == "intra" ? module.vpc.intra_subnets : module.vpc.private_subnets)
   vpc_cidr               = var.vpc_cidr_block
   cluster_name           = var.autoglue.autoglue_cluster_name
+  attached               = each.value.attached
   region                 = var.region
 }
 
 resource "autoglue_cluster_node_pools" "autoglue_cluster_node_pools" {
   cluster_id = autoglue_cluster.cluster.id
   node_pool_ids = [
-    for np in module.node_pool : np.node_pool_id
+    for np in module.node_pool : np.node_pool_id  if np.attached
   ]
 }
