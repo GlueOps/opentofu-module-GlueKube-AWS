@@ -176,6 +176,7 @@ Managed by github-org-manager
 | autoglue_cluster_captain_domain.domain | resource |
 | autoglue_cluster_control_plane_record_set.ctrl_record | resource |
 | autoglue_cluster_metadata.calico_cidr | resource |
+| autoglue_cluster_metadata.calico_node_address_autodetection_v4 | resource |
 | autoglue_cluster_metadata.service_cidr | resource |
 | autoglue_cluster_node_pools.autoglue_cluster_node_pools | resource |
 | autoglue_domain.captain | resource |
