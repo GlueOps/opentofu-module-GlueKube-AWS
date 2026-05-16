@@ -29,3 +29,10 @@ resource "autoglue_cluster_control_plane_record_set" "ctrl_record" {
   cluster_id    = autoglue_cluster.cluster.id
   record_set_id = autoglue_record_set.cluster_record.id
 }
+
+resource "autoglue_cluster_metadata" "calico_node_address_autodetection_v4" {
+  count = var.calico_node_address_autodetection_v4 != null ? 1 : 0
+  cluster_id = autoglue_cluster.cluster.id
+  key        = "calico_node_address_autodetection_v4"
+  value      = var.calico_node_address_autodetection_v4
+}
