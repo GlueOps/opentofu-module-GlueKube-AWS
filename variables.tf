@@ -136,8 +136,17 @@ variable "network_service_cidr" {
   type = string
   validation {
     condition     = can(cidrnetmask(var.network_service_cidr))
-    error_message = "network_service_cidr must be a valid IPv4 CIDR block for Kubernetes services, for example: 10.96.0.0/12."
+    error_message = "network_service_cidr must be a valid IPv4 CIDR block for Kubernetes services, for example: 192.168.0.0/16."
     }
+}
+
+variable "calico_node_address_autodetection_v4" {
+  type    = string
+  default = null
+  validation {
+    condition     = var.calico_node_address_autodetection_v4 == null || can(cidrnetmask(var.calico_node_address_autodetection_v4))
+    error_message = "calico_node_address_autodetection_v4 must be a valid IPv4 CIDR block, for example: 10.62.0.0/15."
+  }
 }
 
 resource "autoglue_cluster_metadata" "service_cidr" {
