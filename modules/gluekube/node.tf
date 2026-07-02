@@ -92,10 +92,14 @@ resource "aws_instance" "cluster_node" {
   subnet_id              = var.subnet_ids[tonumber(each.key) % length(var.subnet_ids)]
   vpc_security_group_ids = [aws_security_group.node_sg.id]
 
-  user_data_base64 = base64encode(templatefile("${path.module}/cloudinit/cloud-init-${var.role}.yaml", {
+  user_data_base64 = base64encode(templatefile("${path.module}/cloudinit/cloud-init.yaml", {
     public_key = autoglue_ssh_key.ssh_key.public_key
     hostname   = "${var.role}-${var.name}-${each.key}"
   }))
+
+  lifecycle {
+    ignore_changes = [user_data_base64]
+  }
 
   root_block_device {
     volume_size = var.storage_size_gb

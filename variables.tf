@@ -151,3 +151,9 @@ resource "autoglue_cluster_metadata" "calico_cidr" {
   key        = "calico_network_calico_cidr"
   value      = var.calico_network_calico_cidr
 }
+
+variable "cluster_metadata" {
+  type        = map(string)
+  description = "Key-value pairs to store as cluster metadata"
+  default     = {}
+}
