@@ -36,9 +36,9 @@ The module follows the same pattern as the HetznerCloud module:
 
 ```hcl
 module "captain" {
-  source                = "git::https://github.com/GlueOps/opentofu-module-GlueKube-AWS.git?ref=v0.1.0"
+  source                = "git::https://github.com/GlueOps/opentofu-module-GlueKube-AWS.git?ref=v0.1.2"
   gluekube_docker_image = "ghcr.io/glueops/gluekube"
-  gluekube_docker_tag   = "v1.34.5-gluekube.26"
+  gluekube_docker_tag   = "latest"
   vpc_cidr_block        = "10.16.0.0/16"
   azs                   = ["us-west-2a", "us-west-2b", "us-west-2c"]
   region                = var.provider_credentials.region
