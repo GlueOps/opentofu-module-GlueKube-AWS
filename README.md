@@ -144,6 +144,87 @@ module "captain" {
 Managed by github-org-manager
 
 <!-- BEGIN_TF_DOCS -->
+# opentofu-module-GlueKube-AWS
+
+This opentofu module deploys a Kubernetes cluster on AWS using GlueKube.
+
+```hcl
+
+module "captain" {
+  source                = "git::https://github.com/GlueOps/opentofu-module-GlueKube-AWS?ref=v0.1.1" # x-release-please-version
+  gluekube_docker_image = "ghcr.io/glueops/gluekube"
+  gluekube_docker_tag   = "latest"
+
+  provider_credentials = var.provider_credentials
+
+  vpc_cidr_block     = "10.0.0.0/16"
+  azs                = ["us-west-2a", "us-west-2b", "us-west-2c"]
+  region             = var.provider_credentials.region
+  enable_nat_gateway = true
+
+  cluster_metadata = {
+    calico_network_calico_cidr           = "172.16.0.0/16"
+    calico_node_address_autodetection_v4 = "10.0.0.0/16"
+    network_service_cidr                 = "192.168.0.0/16"
+  }
+
+  bastion = {
+    instance_type = "t3.large"
+    image         = "" # empty selects the latest Ubuntu 24.04 AMI
+  }
+
+  autoglue = {
+    autoglue_cluster_name = var.autoglue_cluster_name
+
+    credentials = {
+      autoglue_key        = var.autoglue_key
+      autoglue_org_secret = var.autoglue_org_secret
+      base_url            = var.autoglue_base_url
+    }
+
+    route_53_config = {
+      aws_access_key_id     = var.aws_access_key_id
+      aws_secret_access_key = var.aws_secret_access_key
+      aws_region            = var.route53_region
+      domain_name           = var.domain_name
+      zone_id               = var.route53_zone_id
+      credential_id         = var.autoglue_credentials_id
+    }
+  }
+
+  node_pools = [
+    {
+      "name" : "master-node-pool",
+      "instance_type" : "t3.large",
+      "image" : "", # empty selects the latest Ubuntu 24.04 AMI
+      "node_count" : 3,
+      "role" : "master",
+      "subnet" : "private",
+      "kubernetes_labels" : {},
+      "kubernetes_taints" : []
+    },
+    {
+      "name" : "glueops-platform-node-pool-1",
+      "instance_type" : "t3.large",
+      "image" : "",
+      "node_count" : 2,
+      "role" : "worker",
+      "subnet" : "private",
+      "kubernetes_labels" : {
+        "glueops.dev/role" : "glueops-platform"
+      },
+      "kubernetes_taints" : [
+        {
+          key    = "glueops.dev/role"
+          value  = "glueops-platform"
+          effect = "NoSchedule"
+        }
+      ]
+    }
+  ]
+}
+```
+
 ## Requirements
 
 | Name | Version |
