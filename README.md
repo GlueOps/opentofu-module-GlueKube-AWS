@@ -36,12 +36,18 @@ The module follows the same pattern as the HetznerCloud module:
 
 ```hcl
 module "captain" {
-  source                = "git::https://github.com/GlueOps/opentofu-module-GlueKube-AWS.git"
+  source                = "git::https://github.com/GlueOps/opentofu-module-GlueKube-AWS.git?ref=v0.1.0"
   gluekube_docker_image = "ghcr.io/glueops/gluekube"
-  gluekube_docker_tag   = "v1.34.5-gluekube.1"
-  vpc_cidr_block        = "10.0.0.0/16"
+  gluekube_docker_tag   = "v1.34.5-gluekube.26"
+  vpc_cidr_block        = "10.16.0.0/16"
   azs                   = ["us-west-2a", "us-west-2b", "us-west-2c"]
   region                = var.provider_credentials.region
+  enable_nat_gateway    = false
+
+  cluster_metadata = {
+    calico_network_calico_cidr = "172.16.0.0/16"
+    network_service_cidr       = "192.168.0.0/16"
+  }
 
   provider_credentials = var.provider_credentials
   autoglue = {
@@ -63,7 +69,7 @@ module "captain" {
   }
   bastion = {
     instance_type = "t3a.medium"
-    image         = "ami-0786adace1541ca80"
+    image         = "ami-04a649374b43dc2a7"
     create        = true
   }
 
@@ -72,19 +78,19 @@ module "captain" {
       "instance_type" : "c6a.large",
       "role" : "master",
       "name" : "master-node-pool-1",
-      "image" : "ami-0786adace1541ca80",
-      "node_count" : 1,
-      "subnet" : "private",
+      "image" : "ami-04a649374b43dc2a7",
+      "node_count" : 3,
+      "subnet" : "public",
       "kubernetes_labels" : {},
       "kubernetes_taints" : []
     },
     {
       "instance_type" : "c6a.large",
       "role" : "worker",
-      "name" : "glueops-platform-node-pool-4",
-      "image" : "ami-0786adace1541ca80",
+      "name" : "glueops-platform-node-pool-6",
+      "image" : "ami-04a649374b43dc2a7",
       "subnet" : "public",
-      "node_count" : 3,
+      "node_count" : 2,
 
       "kubernetes_labels" : {
         "use-as-loadbalancer" : "platform-traefik",
@@ -102,7 +108,7 @@ module "captain" {
       "instance_type" : "c6a.large",
       "role" : "worker",
       "name" : "clusterwide-node-pool-4",
-      "image" : "ami-0786adace1541ca80",
+      "image" : "ami-04a649374b43dc2a7",
       "subnet" : "public",
       "node_count" : 1,
 
@@ -112,13 +118,7 @@ module "captain" {
       "kubernetes_taints" : []
     },
   ]
-  peering_configs = [
-    {
-      vpc_peering_connection_id = "pcx-xxxxxx"
-      destination_cidr_block    = "10.65.0.0/26"
-      include_intra_routes      = true
-    }
-  ]
+  peering_configs = []
 }
 ```
 
@@ -147,21 +147,21 @@ Managed by github-org-manager
 ## Requirements
 
 | Name | Version |
-|------|---------|
+| ---- | ------- |
 | <a name="requirement_autoglue"></a> [autoglue](#requirement\_autoglue) | 0.10.12 |
 | <a name="requirement_aws"></a> [aws](#requirement\_aws) | 6.53.0 |
 
 ## Providers
 
 | Name | Version |
-|------|---------|
+| ---- | ------- |
 | <a name="provider_autoglue"></a> [autoglue](#provider\_autoglue) | 0.10.12 |
 | <a name="provider_aws"></a> [aws](#provider\_aws) | 6.53.0 |
 
 ## Modules
 
 | Name | Source | Version |
-|------|--------|---------|
+| ---- | ------ | ------- |
 | <a name="module_cluster_metadata"></a> [cluster\_metadata](#module\_cluster\_metadata) | git::https://github.com/GlueOps/opentofu-module-autoglue-metadata.git | v0.0.1 |
 | <a name="module_node_pool"></a> [node\_pool](#module\_node\_pool) | ./modules/gluekube | n/a |
 | <a name="module_vpc"></a> [vpc](#module\_vpc) | terraform-aws-modules/vpc/aws | ~> 5.0 |
@@ -171,7 +171,7 @@ Managed by github-org-manager
 ## Resources
 
 | Name | Type |
-|------|------|
+| ---- | ---- |
 | autoglue_cluster.cluster | resource |
 | autoglue_cluster_bastion.bastion | resource |
 | autoglue_cluster_captain_domain.domain | resource |
@@ -189,7 +189,7 @@ Managed by github-org-manager
 ## Inputs
 
 | Name | Description | Type | Default | Required |
-|------|-------------|------|---------|:--------:|
+| ---- | ----------- | ---- | ------- | :------: |
 | <a name="input_autoglue"></a> [autoglue](#input\_autoglue) | Configuration for the AutoGlue platform integration, including cluster naming, credentials, and Route53 DNS settings. | <pre>object({<br/>    autoglue_cluster_name = string<br/><br/>    credentials = object({<br/>      autoglue_key        = string<br/>      autoglue_org_secret = string<br/>      base_url            = string<br/>    })<br/><br/>    route_53_config = object({<br/>      aws_access_key_id     = string<br/>      aws_secret_access_key = string<br/>      aws_region            = string<br/>      domain_name           = string<br/>      zone_id               = string<br/>      credential_id         = string<br/>    })<br/>  })</pre> | n/a | yes |
 | <a name="input_azs"></a> [azs](#input\_azs) | List of availability zones for subnet distribution | `list(string)` | n/a | yes |
 | <a name="input_bastion"></a> [bastion](#input\_bastion) | Bastion configuration. | <pre>object({<br/>    instance_type = string<br/>    image         = string<br/>    create        = optional(bool, true)<br/>  })</pre> | n/a | yes |
