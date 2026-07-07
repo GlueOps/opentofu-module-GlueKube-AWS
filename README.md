@@ -157,7 +157,7 @@ module "captain" {
 
   provider_credentials = var.provider_credentials
 
-  vpc_cidr_block     = "10.16.0.0/16"
+  vpc_cidr_block     = "10.0.0.0/16"
   azs                = ["us-west-2a", "us-west-2b", "us-west-2c"]
   region             = var.provider_credentials.region
   enable_nat_gateway = true
