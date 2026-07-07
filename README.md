@@ -42,7 +42,7 @@ module "captain" {
   vpc_cidr_block        = "10.16.0.0/16"
   azs                   = ["us-west-2a", "us-west-2b", "us-west-2c"]
   region                = var.provider_credentials.region
-  enable_nat_gateway    = false
+  enable_nat_gateway    = true
 
   cluster_metadata = {
     calico_network_calico_cidr = "172.16.0.0/16"
@@ -151,7 +151,7 @@ This opentofu module deploys a Kubernetes cluster on AWS using GlueKube.
 ```hcl
 
 module "captain" {
-  source                = "git::https://github.com/GlueOps/opentofu-module-GlueKube-AWS?ref=v0.1.1" # x-release-please-version
+  source                = "git::https://github.com/GlueOps/opentofu-module-GlueKube-AWS.git?ref=v0.1.2" # x-release-please-version
   gluekube_docker_image = "ghcr.io/glueops/gluekube"
   gluekube_docker_tag   = "latest"
 
