@@ -47,6 +47,7 @@ module "captain" {
   cluster_metadata = {
     calico_network_calico_cidr = "172.16.0.0/16"
     network_service_cidr       = "192.168.0.0/16"
+    cloud                      = "aws"
   }
 
   provider_credentials = var.provider_credentials
@@ -163,9 +164,9 @@ module "captain" {
   enable_nat_gateway = true
 
   cluster_metadata = {
-    calico_network_calico_cidr           = "172.16.0.0/16"
-    calico_node_address_autodetection_v4 = "10.0.0.0/16"
-    network_service_cidr                 = "192.168.0.0/16"
+    calico_network_calico_cidr = "172.16.0.0/16"
+    network_service_cidr       = "192.168.0.0/16"
+    cloud                      = "aws"
   }
 
   bastion = {
@@ -243,7 +244,7 @@ module "captain" {
 
 | Name | Source | Version |
 |------|--------|---------|
-| <a name="module_cluster_metadata"></a> [cluster\_metadata](#module\_cluster\_metadata) | git::https://github.com/GlueOps/opentofu-module-autoglue-metadata.git | v0.0.1 |
+| <a name="module_cluster_metadata"></a> [cluster\_metadata](#module\_cluster\_metadata) | git::https://github.com/GlueOps/opentofu-module-autoglue-metadata.git | v0.0.2 |
 | <a name="module_node_pool"></a> [node\_pool](#module\_node\_pool) | ./modules/gluekube | n/a |
 | <a name="module_vpc"></a> [vpc](#module\_vpc) | terraform-aws-modules/vpc/aws | ~> 5.0 |
 | <a name="module_vpc_endpoints"></a> [vpc\_endpoints](#module\_vpc\_endpoints) | ./modules/vpc-endpoints | n/a |
@@ -274,7 +275,7 @@ module "captain" {
 | <a name="input_autoglue"></a> [autoglue](#input\_autoglue) | Configuration for the AutoGlue platform integration, including cluster naming, credentials, and Route53 DNS settings. | <pre>object({<br/>    autoglue_cluster_name = string<br/><br/>    credentials = object({<br/>      autoglue_key        = string<br/>      autoglue_org_secret = string<br/>      base_url            = string<br/>    })<br/><br/>    route_53_config = object({<br/>      aws_access_key_id     = string<br/>      aws_secret_access_key = string<br/>      aws_region            = string<br/>      domain_name           = string<br/>      zone_id               = string<br/>      credential_id         = string<br/>    })<br/>  })</pre> | n/a | yes |
 | <a name="input_azs"></a> [azs](#input\_azs) | List of availability zones for subnet distribution | `list(string)` | n/a | yes |
 | <a name="input_bastion"></a> [bastion](#input\_bastion) | Bastion configuration. | <pre>object({<br/>    instance_type = string<br/>    image         = string<br/>    create        = optional(bool, true)<br/>  })</pre> | n/a | yes |
-| <a name="input_cluster_metadata"></a> [cluster\_metadata](#input\_cluster\_metadata) | Key-value pairs to store as cluster metadata | `map(string)` | `{}` | no |
+| <a name="input_cluster_metadata"></a> [cluster\_metadata](#input\_cluster\_metadata) | Structured cluster metadata passed through to the autoglue-metadata module. All fields are required unless noted:<br/>  - calico\_network\_calico\_cidr: CIDR block for the Calico pod network (e.g. "10.244.0.0/16").<br/>  - network\_service\_cidr:       CIDR block for Kubernetes services (e.g. "10.96.0.0/12").<br/>  - cloud:                      Target cloud provider. One of: "aws", "proxmox", "hetzner".<br/>  - cloud\_vars:                 Optional map of cloud-specific overrides. When cloud is "proxmox",<br/>                                "calico\_node\_address\_autodetection\_v4" is required. | <pre>object({<br/>    calico_network_calico_cidr = string<br/>    network_service_cidr       = string<br/>    cloud                      = string<br/>    cloud_vars                 = optional(map(string), {}) # Holds the cloud-specific overrides<br/>  })</pre> | n/a | yes |
 | <a name="input_enable_nat_gateway"></a> [enable\_nat\_gateway](#input\_enable\_nat\_gateway) | Whether to enable NAT Gateway | `bool` | `true` | no |
 | <a name="input_gluekube_docker_image"></a> [gluekube\_docker\_image](#input\_gluekube\_docker\_image) | Docker image for GlueKube | `string` | `"ghcr.io/glueops/gluekube"` | no |
 | <a name="input_gluekube_docker_tag"></a> [gluekube\_docker\_tag](#input\_gluekube\_docker\_tag) | Docker tag for GlueKube | `string` | `"v0.0.12"` | no |
