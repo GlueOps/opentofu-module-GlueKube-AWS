@@ -75,13 +75,13 @@ module "captain" {
   }
 
   node_pools = [
-        {
+    {
       "instance_type" : "c6a.large",
       "role" : "master",
       "name" : "master-node-pool-1",
       "image" : "ami-04a649374b43dc2a7",
       "node_count" : 3,
-      "subnet" : "public",
+      "subnet" : "private",
       "kubernetes_labels" : {},
       "kubernetes_taints" : []
     },
@@ -90,8 +90,8 @@ module "captain" {
       "role" : "worker",
       "name" : "glueops-platform-node-pool",
       "image" : "ami-04a649374b43dc2a7",
-      "subnet" : "public",
-      "node_count" : 2,
+      "subnet" : "private",
+      "node_count" : 3,
 
       "kubernetes_labels" : {
         "glueops.dev/role" : "glueops-platform"
@@ -109,12 +109,10 @@ module "captain" {
       "role" : "worker",
       "name" : "clusterwide-node-pool-4",
       "image" : "ami-04a649374b43dc2a7",
-      "subnet" : "public",
-      "node_count" : 1,
+      "subnet" : "private",
+      "node_count" : 2,
 
-      "kubernetes_labels" : {
-        "glueops.dev/role" : "glueops-platform"
-      },
+      "kubernetes_labels" : {},
       "kubernetes_taints" : []
     },
     {
@@ -123,7 +121,7 @@ module "captain" {
       "name" : "platform-loadbalancer-node-pool",
       "image" : "ami-04a649374b43dc2a7",
       "subnet" : "public",
-      "node_count" : 1,
+      "node_count" : 2,
 
       "kubernetes_labels" : {
         "use-as-loadbalancer" : "platform-traefik",
@@ -142,7 +140,7 @@ module "captain" {
       "name" : "public-loadbalancer-node-pool",
       "image" : "ami-04a649374b43dc2a7",
       "subnet" : "public",
-      "node_count" : 1,
+      "node_count" : 2,
 
       "kubernetes_labels" : {
         "use-as-loadbalancer" : "public-traefik",
@@ -151,6 +149,25 @@ module "captain" {
         {
           key    = "dedicated"
           value  = "public-traefik"
+          effect = "NoSchedule"
+        }
+      ],
+    },
+    {
+      "instance_type" : "c6a.large",
+      "role" : "worker",
+      "name" : "nginx-loadbalancer-node-pool",
+      "image" : "ami-04a649374b43dc2a7",
+      "subnet" : "public",
+      "node_count" : 2,
+
+      "kubernetes_labels" : {
+        "use-as-loadbalancer" : "public",
+      },
+      "kubernetes_taints" : [
+        {
+          key    = "dedicated"
+          value  = "public"
           effect = "NoSchedule"
         }
       ],
