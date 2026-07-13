@@ -3,7 +3,7 @@ output "role" {
 }
 
 output "master_private_ips" {
-  value = var.role == "master" ? [for s in autoglue_server.node : s.private_ip_address] : []
+  value = var.role == "master" ? sort([for s in autoglue_server.node : s.private_ip_address]) : []
 }
 
 output "node_pool_id" {
