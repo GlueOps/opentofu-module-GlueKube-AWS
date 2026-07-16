@@ -2,8 +2,8 @@ name: test-apply
 
 # Manually-triggered end-to-end test of `module "captain"`.
 #
-# Flow: tofu init -> apply (real AWS + AutoGlue resources) -> [placeholder for the
-# AutoGlue kubernetes-setup curl chain, deferred] -> tofu destroy (always).
+# Flow: tofu init -> apply (real AWS + AutoGlue resources) -> invoke the AutoGlue
+# kubernetes-setup action (examples/test/invoke_autoglue.sh) -> tofu destroy (always).
 #
 # Required repository secrets (mapped to TF_VAR_* below):
 #   AWS_ACCESS_KEY                 AWS_SECRET_KEY                 AWS_SESSION_TOKEN (optional)
@@ -12,12 +12,18 @@ name: test-apply
 #   AUTOGLUE_BASE_URL
 #   ROUTE53_AWS_ACCESS_KEY_ID      ROUTE53_AWS_SECRET_ACCESS_KEY
 #   DOMAIN_NAME                    ROUTE53_ZONE_ID                AUTOGLUE_CREDENTIAL_ID
+# Additional secrets for the AutoGlue action invocation (invoke_autoglue.sh):
+#   AUTOGLUE_API_KEY  (X-API-KEY header)            AUTOGLUE_ORG_ID  (x-org-id header)
 # Non-secret defaults (aws_region, azs, instance types, CIDRs, cloud) come from
 # examples/test/variables.tf; override there if needed.
 
 on:
   workflow_dispatch:
     inputs:
+      action_make_target:
+        description: "AutoGlue action make_target to run after apply (the k8s setup target)"
+        type: string
+        required: true
       destroy:
         description: "Run tofu destroy after apply"
         type: boolean
@@ -64,17 +70,14 @@ jobs:
       - name: Tofu apply
         run: tofu apply -auto-approve
 
-      # ---------------------------------------------------------------------
-      # TODO (deferred): AutoGlue kubernetes-setup invocation.
-      # This is the chain of curl commands that triggers cluster setup in
-      # AutoGlue after the resources exist. Left as a placeholder for now.
-      # When implemented, it will need the cluster id — surface it via a root
-      # output.tf first (see plan follow-ups), then reference it here.
-      # ---------------------------------------------------------------------
-      - name: Invoke AutoGlue kubernetes setup (placeholder)
-        run: |
-          echo "TODO: AutoGlue kubernetes-setup curl chain goes here (deferred)."
-          echo "Apply succeeded; skipping AutoGlue invocation for now."
+      - name: Invoke AutoGlue kubernetes setup
+        env:
+          BASE_URL: ${{ secrets.AUTOGLUE_BASE_URL }}
+          API_KEY: ${{ secrets.AUTOGLUE_API_KEY }}
+          ORG_ID: ${{ secrets.AUTOGLUE_ORG_ID }}
+          CLUSTER_NAME: ${{ secrets.AUTOGLUE_CLUSTER_NAME }}
+          ACTION_MAKE_TARGET: ${{ inputs.action_make_target }}
+        run: bash invoke_autoglue.sh
 
       - name: Tofu destroy
         if: ${{ always() && inputs.destroy }}
