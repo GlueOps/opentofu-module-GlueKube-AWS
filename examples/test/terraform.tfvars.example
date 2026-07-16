@@ -1,0 +1,41 @@
+# Example tfvars for the test module. Copy to terraform.tfvars and fill in real
+# values for local runs:  cp terraform.tfvars.example terraform.tfvars
+#
+# NOTE: *.tfvars is gitignored at the repo root — never commit real secrets.
+# In CI these values are injected from GitHub secrets as TF_VAR_* env vars
+# (see ../../.github/workflows/test-apply.yaml), so a tfvars file is not used there.
+
+# --- AWS provider credentials ---
+aws_access_key    = "AKIAxxxxxxxxxxxxxxxx"
+aws_secret_key    = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+aws_session_token = null # set only for temporary credentials
+aws_region        = "us-west-2"
+aws_provider_name = "aws"
+
+# --- network / compute ---
+vpc_cidr_block        = "10.16.0.0/16"
+azs                   = ["us-west-2a", "us-west-2b", "us-west-2c"]
+node_ami              = "ami-04a649374b43dc2a7" # Ubuntu 24.04 in the target region
+node_instance_type    = "c6a.large"
+node_count            = 1
+bastion_ami           = "ami-04a649374b43dc2a7"
+bastion_instance_type = "t3a.medium"
+
+# --- AutoGlue integration ---
+autoglue_cluster_name = "test-cluster"
+autoglue_key          = "your-autoglue-org-key"
+autoglue_org_secret   = "your-autoglue-org-secret"
+autoglue_base_url     = "https://autoglue.example.com"
+
+# --- Route53 config ---
+route53_aws_access_key_id     = "AKIAxxxxxxxxxxxxxxxx"
+route53_aws_secret_access_key = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+route53_region                = "us-west-2"
+domain_name                   = "test.example.com"
+route53_zone_id               = "Z0000000000000000000"
+autoglue_credential_id        = "your-autoglue-credential-id"
+
+# --- cluster metadata ---
+calico_cidr  = "172.16.0.0/16"
+service_cidr = "192.168.0.0/16"
+cloud        = "aws"
