@@ -13,7 +13,7 @@ name: test-apply
 #   ROUTE53_AWS_ACCESS_KEY_ID      ROUTE53_AWS_SECRET_ACCESS_KEY
 #   DOMAIN_NAME                    ROUTE53_ZONE_ID                AUTOGLUE_CREDENTIAL_ID
 # Additional secrets for the AutoGlue action invocation (invoke_autoglue.sh):
-#   AUTOGLUE_API_KEY  (X-API-KEY header)            AUTOGLUE_ORG_ID  (x-org-id header)
+#   AUTOGLUE_API_KEY  (X-API-KEY header)            AUTOGLUE_ORG_NAME  (resolved to org id)
 # Non-secret defaults (aws_region, azs, instance types, CIDRs, cloud) come from
 # examples/test/variables.tf; override there if needed.
 
@@ -74,7 +74,7 @@ jobs:
         env:
           BASE_URL: ${{ secrets.AUTOGLUE_BASE_URL }}
           API_KEY: ${{ secrets.AUTOGLUE_API_KEY }}
-          ORG_ID: ${{ secrets.AUTOGLUE_ORG_ID }}
+          ORG_NAME: ${{ secrets.AUTOGLUE_ORG_NAME }}
           CLUSTER_NAME: ${{ secrets.AUTOGLUE_CLUSTER_NAME }}
           ACTION_MAKE_TARGET: ${{ inputs.action_make_target }}
         run: bash invoke_autoglue.sh

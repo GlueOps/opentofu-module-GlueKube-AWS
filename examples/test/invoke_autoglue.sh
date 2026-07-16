@@ -2,15 +2,15 @@
 #
 # Invoke an AutoGlue action against the cluster created by `tofu apply`.
 #
-# Resolves the cluster id by name, finds the action id by its make target,
-# triggers an action run (the "kubernetes setup" invocation), then polls the run
-# status until it succeeds (exit 0) or fails (exit 1). Called by the test-apply
-# workflow after apply. Requires `curl` and `jq` on PATH.
+# Resolves the org id by name, the cluster id by name, finds the action id by its
+# make target, triggers an action run (the "kubernetes setup" invocation), then
+# polls the run status until it succeeds (exit 0) or fails (exit 1). Called by the
+# test-apply workflow after apply. Requires `curl` and `jq` on PATH.
 #
 # Required environment variables:
 #   BASE_URL            AutoGlue API base url
 #   API_KEY             AutoGlue API key            (sent as X-API-KEY header)
-#   ORG_ID              AutoGlue org id             (sent as x-org-id header)
+#   ORG_NAME            AutoGlue org name (resolved to org id via the /orgs endpoint)
 #   CLUSTER_NAME        Name of the cluster to look up
 #   ACTION_MAKE_TARGET  make_target of the action to run (the k8s setup target)
 # Optional:
@@ -21,9 +21,23 @@ POLL_INTERVAL_SECONDS="${POLL_INTERVAL_SECONDS:-120}"
 
 : "${BASE_URL:?BASE_URL is required}"
 : "${API_KEY:?API_KEY is required}"
-: "${ORG_ID:?ORG_ID is required}"
+: "${ORG_NAME:?ORG_NAME is required}"
 : "${CLUSTER_NAME:?CLUSTER_NAME is required}"
 : "${ACTION_MAKE_TARGET:?ACTION_MAKE_TARGET is required}"
+
+echo "==> Step 1: Getting org_id for org '${ORG_NAME}'..."
+ORGS=$(curl -sfS --http1.1 -X GET "${BASE_URL}/orgs" \
+  -H "accept: application/json" \
+  -H "X-API-KEY: ${API_KEY}")
+
+ORG_ID=$(echo "$ORGS" | jq -r --arg name "$ORG_NAME" \
+  '.[] | select(.name == $name) | .id')
+
+if [ -z "$ORG_ID" ] || [ "$ORG_ID" = "null" ]; then
+  echo "ERROR: Org '${ORG_NAME}' not found"
+  exit 1
+fi
+echo "Found org_id: ${ORG_ID}"
 
 echo "==> Step 2: Getting cluster_id for cluster '${CLUSTER_NAME}'..."
 CLUSTERS=$(curl -sfS --http1.1 -G "${BASE_URL}/clusters" \
