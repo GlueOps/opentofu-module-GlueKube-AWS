@@ -85,6 +85,12 @@ variable "bastion_instance_type" {
   default     = "t3a.medium"
 }
 
+variable "enable_vpc_endpoints" {
+  type        = bool
+  description = "Whether to create the VPC endpoints (e.g. the S3 gateway endpoint)."
+  default     = false
+}
+
 ################################
 # AutoGlue integration
 ################################

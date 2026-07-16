@@ -8,10 +8,11 @@ module "captain" {
   source = "../../"
 
   # --- network / compute ---
-  vpc_cidr_block     = var.vpc_cidr_block
-  azs                = var.azs
-  region             = var.aws_region
-  enable_nat_gateway = true
+  vpc_cidr_block       = var.vpc_cidr_block
+  azs                  = var.azs
+  region               = var.aws_region
+  enable_nat_gateway   = true
+  enable_vpc_endpoints = var.enable_vpc_endpoints
 
   # --- AWS provider credentials ---
   provider_credentials = {

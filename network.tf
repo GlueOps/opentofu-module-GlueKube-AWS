@@ -58,6 +58,7 @@ module "vpc" {
 module "vpc_endpoints" {
   source = "./modules/vpc-endpoints"
 
+  create = var.enable_vpc_endpoints
   vpc_id = module.vpc.vpc_id
 
   create_security_group      = true
