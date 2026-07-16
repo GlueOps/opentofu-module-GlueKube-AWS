@@ -14,10 +14,12 @@
 #   CLUSTER_NAME        Name of the cluster to look up
 #   ACTION_MAKE_TARGET  make_target of the action to run (the k8s setup target)
 # Optional:
-#   POLL_INTERVAL_SECONDS  seconds between status checks (default 120)
+#   POLL_INTERVAL_SECONDS  seconds between status checks (default 300)
 set -euo pipefail
 
-POLL_INTERVAL_SECONDS="${POLL_INTERVAL_SECONDS:-120}"
+POLL_INTERVAL_SECONDS="${POLL_INTERVAL_SECONDS:-300}"
+
+sleep "${POLL_INTERVAL_SECONDS}"
 
 : "${BASE_URL:?BASE_URL is required}"
 : "${API_KEY:?API_KEY is required}"
