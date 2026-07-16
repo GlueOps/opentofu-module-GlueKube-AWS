@@ -13,6 +13,8 @@ module "captain" {
   region               = var.aws_region
   enable_nat_gateway   = true
   enable_vpc_endpoints = var.enable_vpc_endpoints
+  gluekube_docker_image = "ghcr.io/glueops/gluekube"
+  gluekube_docker_tag   = "v1.34.5-gluekube.29"
 
   # --- AWS provider credentials ---
   provider_credentials = {
