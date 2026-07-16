@@ -2,9 +2,10 @@
 #
 # Invoke an AutoGlue action against the cluster created by `tofu apply`.
 #
-# Resolves the cluster id by name, finds the action id by its make target, then
-# triggers an action run (this is the "kubernetes setup" invocation). Called by
-# the test-apply workflow after apply. Requires `curl` and `jq` on PATH.
+# Resolves the cluster id by name, finds the action id by its make target,
+# triggers an action run (the "kubernetes setup" invocation), then polls the run
+# status until it succeeds (exit 0) or fails (exit 1). Called by the test-apply
+# workflow after apply. Requires `curl` and `jq` on PATH.
 #
 # Required environment variables:
 #   BASE_URL            AutoGlue API base url
@@ -12,7 +13,11 @@
 #   ORG_ID              AutoGlue org id             (sent as x-org-id header)
 #   CLUSTER_NAME        Name of the cluster to look up
 #   ACTION_MAKE_TARGET  make_target of the action to run (the k8s setup target)
+# Optional:
+#   POLL_INTERVAL_SECONDS  seconds between status checks (default 120)
 set -euo pipefail
+
+POLL_INTERVAL_SECONDS="${POLL_INTERVAL_SECONDS:-120}"
 
 : "${BASE_URL:?BASE_URL is required}"
 : "${API_KEY:?API_KEY is required}"
@@ -58,3 +63,40 @@ RESPONSE=$(curl -sfS --http1.1 -X POST "${BASE_URL}/clusters/${CLUSTER_ID}/actio
 
 echo "Action triggered successfully:"
 echo "$RESPONSE" | jq .
+
+RUN_ID=$(echo "$RESPONSE" | jq -r '.id')
+if [ -z "$RUN_ID" ] || [ "$RUN_ID" = "null" ]; then
+  echo "ERROR: could not determine run id from the trigger response"
+  exit 1
+fi
+echo "Started run_id: ${RUN_ID}"
+
+echo "==> Step 5: Polling run status every ${POLL_INTERVAL_SECONDS}s..."
+while true; do
+  RUN=$(curl -sfS --http1.1 -X GET "${BASE_URL}/clusters/${CLUSTER_ID}/runs/${RUN_ID}" \
+    -H "accept: application/json" \
+    -H "X-API-KEY: ${API_KEY}" \
+    -H "x-org-id: ${ORG_ID}") || {
+    echo "WARN: status check failed (transient?), retrying in ${POLL_INTERVAL_SECONDS}s"
+    sleep "${POLL_INTERVAL_SECONDS}"
+    continue
+  }
+
+  STATUS=$(echo "$RUN" | jq -r '.status' | tr '[:upper:]' '[:lower:]')
+  echo "run ${RUN_ID} status: ${STATUS}"
+
+  case "$STATUS" in
+    succeeded)
+      echo "Run succeeded."
+      break
+      ;;
+    failed)
+      echo "ERROR: run failed."
+      echo "$RUN" | jq -r '.error // "no error message provided"'
+      exit 1
+      ;;
+    *)
+      sleep "${POLL_INTERVAL_SECONDS}"
+      ;;
+  esac
+done
