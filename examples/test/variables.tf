@@ -13,6 +13,8 @@
 variable "aws_access_key" {
   type        = string
   description = "AWS access key for the primary provider."
+  sensitive   = true
+
 }
 
 variable "aws_secret_key" {
@@ -25,6 +27,7 @@ variable "aws_session_token" {
   type        = string
   description = "Optional AWS session token (for temporary credentials)."
   default     = null
+  sensitive   = true
 }
 
 variable "aws_region" {
