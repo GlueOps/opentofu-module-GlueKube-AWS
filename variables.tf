@@ -51,6 +51,12 @@ variable "enable_nat_gateway" {
   default     = true
 }
 
+variable "enable_vpc_endpoints" {
+  type        = bool
+  description = "Whether to create the VPC endpoints (e.g. the S3 gateway endpoint)."
+  default     = true
+}
+
 variable "bastion" {
   description = "Bastion configuration."
   type = object({

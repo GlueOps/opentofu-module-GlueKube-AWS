@@ -20,6 +20,7 @@ node_instance_type    = "c6a.large"
 node_count            = 1
 bastion_ami           = "ami-04a649374b43dc2a7"
 bastion_instance_type = "t3a.medium"
+enable_vpc_endpoints  = true # set false to skip the S3 gateway endpoint
 
 # --- AutoGlue integration ---
 autoglue_cluster_name = "test-cluster"
