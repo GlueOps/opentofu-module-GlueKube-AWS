@@ -1,0 +1,81 @@
+name: test-apply
+
+# Manually-triggered end-to-end test of `module "captain"`.
+#
+# Flow: tofu init -> apply (real AWS + AutoGlue resources) -> [placeholder for the
+# AutoGlue kubernetes-setup curl chain, deferred] -> tofu destroy (always).
+#
+# Required repository secrets (mapped to TF_VAR_* below):
+#   AWS_ACCESS_KEY                 AWS_SECRET_KEY                 AWS_SESSION_TOKEN (optional)
+#   NODE_AMI                       BASTION_AMI
+#   AUTOGLUE_CLUSTER_NAME          AUTOGLUE_KEY                   AUTOGLUE_ORG_SECRET
+#   AUTOGLUE_BASE_URL
+#   ROUTE53_AWS_ACCESS_KEY_ID      ROUTE53_AWS_SECRET_ACCESS_KEY
+#   DOMAIN_NAME                    ROUTE53_ZONE_ID                AUTOGLUE_CREDENTIAL_ID
+# Non-secret defaults (aws_region, azs, instance types, CIDRs, cloud) come from
+# examples/test/variables.tf; override there if needed.
+
+on:
+  workflow_dispatch:
+    inputs:
+      destroy:
+        description: "Run tofu destroy after apply"
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+jobs:
+  test-apply:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: examples/test
+    env:
+      # AWS provider credentials
+      TF_VAR_aws_access_key: ${{ secrets.AWS_ACCESS_KEY }}
+      TF_VAR_aws_secret_key: ${{ secrets.AWS_SECRET_KEY }}
+      TF_VAR_aws_session_token: ${{ secrets.AWS_SESSION_TOKEN }}
+      # network / compute
+      TF_VAR_node_ami: ${{ secrets.NODE_AMI }}
+      TF_VAR_bastion_ami: ${{ secrets.BASTION_AMI }}
+      # AutoGlue integration
+      TF_VAR_autoglue_cluster_name: ${{ secrets.AUTOGLUE_CLUSTER_NAME }}
+      TF_VAR_autoglue_key: ${{ secrets.AUTOGLUE_KEY }}
+      TF_VAR_autoglue_org_secret: ${{ secrets.AUTOGLUE_ORG_SECRET }}
+      TF_VAR_autoglue_base_url: ${{ secrets.AUTOGLUE_BASE_URL }}
+      # Route53 config
+      TF_VAR_route53_aws_access_key_id: ${{ secrets.ROUTE53_AWS_ACCESS_KEY_ID }}
+      TF_VAR_route53_aws_secret_access_key: ${{ secrets.ROUTE53_AWS_SECRET_ACCESS_KEY }}
+      TF_VAR_domain_name: ${{ secrets.DOMAIN_NAME }}
+      TF_VAR_route53_zone_id: ${{ secrets.ROUTE53_ZONE_ID }}
+      TF_VAR_autoglue_credential_id: ${{ secrets.AUTOGLUE_CREDENTIAL_ID }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup OpenTofu
+        uses: opentofu/setup-opentofu@v1
+
+      - name: Tofu init
+        run: tofu init
+
+      - name: Tofu apply
+        run: tofu apply -auto-approve
+
+      # ---------------------------------------------------------------------
+      # TODO (deferred): AutoGlue kubernetes-setup invocation.
+      # This is the chain of curl commands that triggers cluster setup in
+      # AutoGlue after the resources exist. Left as a placeholder for now.
+      # When implemented, it will need the cluster id — surface it via a root
+      # output.tf first (see plan follow-ups), then reference it here.
+      # ---------------------------------------------------------------------
+      - name: Invoke AutoGlue kubernetes setup (placeholder)
+        run: |
+          echo "TODO: AutoGlue kubernetes-setup curl chain goes here (deferred)."
+          echo "Apply succeeded; skipping AutoGlue invocation for now."
+
+      - name: Tofu destroy
+        if: ${{ always() && inputs.destroy }}
+        run: tofu destroy -auto-approve
