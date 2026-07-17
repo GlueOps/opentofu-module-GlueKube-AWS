@@ -95,7 +95,7 @@ module "captain" {
       ]
     },
     {
-      "instance_type" : var.instance_type,
+      "instance_type" : var.node_instance_type,
       "role" : "worker",
       "name" : "clusterwide-node-pool",
       "image" : var.node_ami,
