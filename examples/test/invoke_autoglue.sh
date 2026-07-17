@@ -3,9 +3,10 @@
 # Invoke an AutoGlue action against the cluster created by `tofu apply`.
 #
 # Resolves the org id by name, the cluster id by name, finds the action id by its
-# make target, triggers an action run (the "kubernetes setup" invocation), then
-# polls the run status until it succeeds (exit 0) or fails (exit 1). Called by the
-# test-apply workflow after apply. Requires `curl` and `jq` on PATH.
+# make target, makes sure the bastion is ready (nudging it back to pending if not),
+# triggers an action run (the "kubernetes setup" invocation), then polls the run
+# status until it succeeds (exit 0) or fails (exit 1). Called by the test-apply
+# workflow after apply. Requires `curl` and `jq` on PATH.
 #
 # Required environment variables:
 #   BASE_URL            AutoGlue API base url
@@ -71,7 +72,38 @@ if [ -z "$ACTION_ID" ] || [ "$ACTION_ID" = "null" ]; then
 fi
 echo "Found action_id: ${ACTION_ID}"
 
-echo "==> Step 4: Triggering action run..."
+echo "==> Step 4: Checking bastion status..."
+BASTIONS=$(curl -sfS --http1.1 -G "${BASE_URL}/servers" \
+  --data-urlencode "role=bastion" \
+  -H "accept: application/json" \
+  -H "X-API-KEY: ${API_KEY}" \
+  -H "x-org-id: ${ORG_ID}")
+
+BASTION=$(echo "$BASTIONS" | jq -r '.[0] // empty')
+if [ -z "$BASTION" ]; then
+  echo "ERROR: no bastion server returned by ${BASE_URL}/servers?role=bastion"
+  exit 1
+fi
+
+BASTION_ID=$(echo "$BASTION" | jq -r '.id')
+BASTION_STATUS=$(echo "$BASTION" | jq -r '.status' | tr '[:upper:]' '[:lower:]')
+echo "bastion ${BASTION_ID} status: ${BASTION_STATUS}"
+
+if [ "$BASTION_STATUS" = "ready" ]; then
+  echo "Bastion is ready."
+else
+  echo "Bastion is not ready, setting its status back to pending..."
+  curl -sfS --http1.1 -X PATCH "${BASE_URL}/servers/${BASTION_ID}" \
+    -H "accept: application/json" \
+    -H "content-type: application/json" \
+    -H "X-API-KEY: ${API_KEY}" \
+    -H "x-org-id: ${ORG_ID}" \
+    --data-raw '{"status":"pending"}' | jq .
+fi
+
+sleep 300
+
+echo "==> Step 5: Triggering action run..."
 RESPONSE=$(curl -sfS --http1.1 -X POST "${BASE_URL}/clusters/${CLUSTER_ID}/actions/${ACTION_ID}/runs" \
   -H "accept: application/json" \
   -H "X-API-KEY: ${API_KEY}" \
@@ -87,7 +119,7 @@ if [ -z "$RUN_ID" ] || [ "$RUN_ID" = "null" ]; then
 fi
 echo "Started run_id: ${RUN_ID}"
 
-echo "==> Step 5: Polling run status every ${POLL_INTERVAL_SECONDS}s..."
+echo "==> Step 6: Polling run status every ${POLL_INTERVAL_SECONDS}s..."
 while true; do
   RUN=$(curl -sfS --http1.1 -X GET "${BASE_URL}/clusters/${CLUSTER_ID}/runs/${RUN_ID}" \
     -H "accept: application/json" \
