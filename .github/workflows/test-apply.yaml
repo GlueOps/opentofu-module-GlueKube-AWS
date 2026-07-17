@@ -3,7 +3,8 @@ name: test-apply
 # Manually-triggered end-to-end test of `module "captain"`.
 #
 # Flow: tofu init -> apply (real AWS + AutoGlue resources) -> invoke the AutoGlue
-# kubernetes-setup action (examples/test/invoke_autoglue.sh) -> tofu destroy (always).
+# kubernetes-setup action (examples/test/invoke_autoglue.sh) -> ssh to a master and run
+# kubectl (examples/test/check_cluster_health.sh) -> tofu destroy (always).
 #
 # Required repository secrets (mapped to TF_VAR_* below):
 #   AWS_ACCESS_KEY                 AWS_SECRET_KEY                 AWS_SESSION_TOKEN (optional)
@@ -78,6 +79,13 @@ jobs:
           CLUSTER_NAME: ${{ secrets.AUTOGLUE_CLUSTER_NAME }}
           ACTION_MAKE_TARGET: ${{ inputs.action_make_target }}
         run: bash invoke_autoglue.sh
+
+      - name: Check cluster health
+        env:
+          BASE_URL: ${{ secrets.AUTOGLUE_BASE_URL }}
+          API_KEY: ${{ secrets.AUTOGLUE_API_KEY }}
+          ORG_NAME: ${{ secrets.AUTOGLUE_ORG_NAME }}
+        run: bash check_cluster_health.sh
 
       - name: Tofu destroy
         if: ${{ always() && inputs.destroy }}

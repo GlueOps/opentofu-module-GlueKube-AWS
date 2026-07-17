@@ -65,7 +65,7 @@ module "captain" {
   # role = "master" and attached = true (see ../../variables.tf).
   node_pools = [
     {
-      name              = "test-master-pool"
+      name              = "master-node-pool"
       role              = "master"
       instance_type     = var.node_instance_type
       image             = var.node_ami
@@ -74,7 +74,37 @@ module "captain" {
       attached          = true
       kubernetes_labels = {}
       kubernetes_taints = []
-    }
+    },
+    {
+      "instance_type": var.node_instance_type,
+      "role" : "worker",
+      "name" : "glueops-platform-node-pool",
+      "image": var.node_ami,
+      "subnet" : "private",
+      "node_count" : 3,
+
+      "kubernetes_labels" : {
+        "glueops.dev/role" : "glueops-platform"
+      },
+      "kubernetes_taints" : [
+        {
+          key    = "glueops.dev/role"
+          value  = "glueops-platform"
+          effect = "NoSchedule"
+        }
+      ]
+    },
+    {
+      "instance_type" : var.instance_type,
+      "role" : "worker",
+      "name" : "clusterwide-node-pool",
+      "image" : var.node_ami,
+      "subnet" : "private",
+      "node_count" : 2,
+
+      "kubernetes_labels" : {},
+      "kubernetes_taints" : []
+    },
   ]
 
   peering_configs = []
