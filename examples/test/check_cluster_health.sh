@@ -115,12 +115,29 @@ SSH_OPTS=(
   -o UserKnownHostsFile=/dev/null
   -o ConnectTimeout=30
 )
+
+# Remote check: print all pods, then fail if any pod is in a Pending or Failed phase.
+# Runs on the master under the kubeadm admin kubeconfig.
+REMOTE_CHECK='
+set -euo pipefail
+export KUBECONFIG=/etc/kubernetes/admin.conf
+kubectl get pods -A
+bad=$(kubectl get pods -A \
+  -o jsonpath="{range .items[?(@.status.phase==\"Pending\")]}{.metadata.namespace}/{.metadata.name} Pending{\"\n\"}{end}{range .items[?(@.status.phase==\"Failed\")]}{.metadata.namespace}/{.metadata.name} Failed{\"\n\"}{end}")
+if [ -n "$bad" ]; then
+  echo "ERROR: pods in Pending/Failed status:"
+  echo "$bad"
+  exit 1
+fi
+echo "All pods are healthy (none Pending or Failed)."
+'
+
 # ProxyCommand tunnels through the bastion with the bastion's own key, so the master
 # key never has to be copied onto the bastion.
 ssh -i "$MASTER_KEY_FILE" \
   "${SSH_OPTS[@]}" \
   -o ProxyCommand="ssh -i ${BASTION_KEY_FILE} ${SSH_OPTS[*]} -W %h:%p ${BASTION_USER}@${BASTION_IP}" \
   "${MASTER_USER}@${MASTER_IP}" \
-  'sudo KUBECONFIG=/etc/kubernetes/admin.conf kubectl get pods -A'
+  "sudo bash -c '${REMOTE_CHECK}'"
 
 echo "Cluster is reachable and kubectl responded."
