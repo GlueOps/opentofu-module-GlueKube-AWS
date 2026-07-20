@@ -85,6 +85,18 @@ variable "bastion_instance_type" {
   default     = "t3a.medium"
 }
 
+variable "gluekube_docker_image" {
+  type        = string
+  description = "Docker image for GlueKube."
+  default     = "ghcr.io/glueops/gluekube"
+}
+
+variable "gluekube_docker_tag" {
+  type        = string
+  description = "Docker tag for GlueKube (set per-run from the workflow input)."
+  default     = "v1.34.5-gluekube.29"
+}
+
 variable "enable_vpc_endpoints" {
   type        = bool
   description = "Whether to create the VPC endpoints (e.g. the S3 gateway endpoint)."

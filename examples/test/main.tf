@@ -8,13 +8,13 @@ module "captain" {
   source = "../../"
 
   # --- network / compute ---
-  vpc_cidr_block       = var.vpc_cidr_block
-  azs                  = var.azs
-  region               = var.aws_region
-  enable_nat_gateway   = true
-  enable_vpc_endpoints = var.enable_vpc_endpoints
-  gluekube_docker_image = "ghcr.io/glueops/gluekube"
-  gluekube_docker_tag   = "v1.34.5-gluekube.30-r1"
+  vpc_cidr_block        = var.vpc_cidr_block
+  azs                   = var.azs
+  region                = var.aws_region
+  enable_nat_gateway    = true
+  enable_vpc_endpoints  = var.enable_vpc_endpoints
+  gluekube_docker_image = var.gluekube_docker_image
+  gluekube_docker_tag   = var.gluekube_docker_tag
 
   # --- AWS provider credentials ---
   provider_credentials = {
@@ -76,10 +76,10 @@ module "captain" {
       kubernetes_taints = []
     },
     {
-      "instance_type": var.node_instance_type,
+      "instance_type" : var.node_instance_type,
       "role" : "worker",
       "name" : "glueops-platform-node-pool",
-      "image": var.node_ami,
+      "image" : var.node_ami,
       "subnet" : "private",
       "node_count" : 3,
 

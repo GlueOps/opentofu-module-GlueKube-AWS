@@ -25,6 +25,10 @@ on:
         description: "AutoGlue action make_target to run after apply (the k8s setup target)"
         type: string
         required: true
+      gluekube_docker_tag:
+        description: "GlueKube docker tag to test (defaults to examples/test/variables.tf)"
+        type: string
+        required: false
       destroy:
         description: "Run tofu destroy after apply"
         type: boolean
@@ -47,6 +51,9 @@ jobs:
       # network / compute
       TF_VAR_node_ami: ${{ secrets.NODE_AMI }}
       TF_VAR_bastion_ami: ${{ secrets.BASTION_AMI }}
+      # TF_VAR_gluekube_docker_tag is not set here: an empty TF_VAR_* overrides the
+      # variables.tf default with "" rather than falling back to it. The step below
+      # exports it only when the input is actually provided.
       # AutoGlue integration
       TF_VAR_autoglue_cluster_name: ${{ secrets.AUTOGLUE_CLUSTER_NAME }}
       TF_VAR_autoglue_key: ${{ secrets.AUTOGLUE_KEY }}
@@ -64,6 +71,14 @@ jobs:
 
       - name: Setup OpenTofu
         uses: opentofu/setup-opentofu@v1
+
+      # Only override the tag when the dispatch input is non-empty, so a blank input
+      # keeps the default from examples/test/variables.tf. Applies to apply + destroy.
+      - name: Set GlueKube docker tag
+        if: ${{ inputs.gluekube_docker_tag != '' }}
+        env:
+          TAG: ${{ inputs.gluekube_docker_tag }}
+        run: echo "TF_VAR_gluekube_docker_tag=${TAG}" >> "$GITHUB_ENV"
 
       - name: Tofu init
         run: tofu init
