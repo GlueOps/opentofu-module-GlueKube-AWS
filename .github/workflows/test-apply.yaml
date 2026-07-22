@@ -1,6 +1,7 @@
 name: test-apply
 
-# Manually-triggered end-to-end test of `module "captain"`.
+# End-to-end test of `module "captain"`. Runs daily on a schedule, and on demand
+# via workflow_dispatch.
 #
 # Flow: tofu init -> apply (real AWS + AutoGlue resources) -> invoke the AutoGlue
 # kubernetes-setup action (examples/test/invoke_autoglue.sh) -> ssh to a master and run
@@ -17,25 +18,33 @@ name: test-apply
 #   AUTOGLUE_API_KEY  (X-API-KEY header)            AUTOGLUE_ORG_NAME  (resolved to org id)
 # Non-secret defaults (aws_region, azs, instance types, CIDRs, cloud) come from
 # examples/test/variables.tf; override there if needed.
+#
+# Teardown always runs, on every trigger, whether or not earlier steps failed.
 
 on:
+  schedule:
+    # 06:00 UTC daily. Scheduled runs only fire from the default branch.
+    - cron: "0 6 * * *"
   workflow_dispatch:
     inputs:
       action_make_target:
         description: "AutoGlue action make_target to run after apply (the k8s setup target)"
         type: string
-        required: true
+        required: false
+        default: "setup"
       gluekube_docker_tag:
         description: "GlueKube docker tag to test (defaults to examples/test/variables.tf)"
         type: string
         required: false
-      destroy:
-        description: "Run tofu destroy after apply"
-        type: boolean
-        default: true
 
 permissions:
   contents: read
+
+# Real AWS + AutoGlue infrastructure with a fixed cluster name: never let a manual
+# run and the nightly run collide.
+concurrency:
+  group: test-apply
+  cancel-in-progress: false
 
 jobs:
   test-apply:
@@ -92,7 +101,8 @@ jobs:
           API_KEY: ${{ secrets.AUTOGLUE_API_KEY }}
           ORG_NAME: ${{ secrets.AUTOGLUE_ORG_NAME }}
           CLUSTER_NAME: ${{ secrets.AUTOGLUE_CLUSTER_NAME }}
-          ACTION_MAKE_TARGET: ${{ inputs.action_make_target }}
+          # Scheduled runs have no inputs, so fall back to the same default.
+          ACTION_MAKE_TARGET: ${{ inputs.action_make_target || 'setup' }}
         run: bash invoke_autoglue.sh
 
       - name: Check cluster health
@@ -103,5 +113,14 @@ jobs:
         run: bash check_cluster_health.sh
 
       - name: Tofu destroy
-        if: ${{ always() && inputs.destroy }}
+        if: always()
         run: tofu destroy -auto-approve
+      
+      - name: Run AWS Destroy Only (in case previous step failed)
+        env:
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_KEY }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY }}
+        run: |
+          docker exec --workdir $PWD -e AWS_SECRET_ACCESS_KEY -e AWS_ACCESS_KEY_ID -e AWS_DEFAULT_REGION=us-west-2 codespaces sh ./destroy-aws.sh
+        if: always()
+
