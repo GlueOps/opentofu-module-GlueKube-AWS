@@ -121,6 +121,6 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_KEY }}
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY }}
         run: |
-          docker run -v $(pwd):/app --workdir /app/examples/test -e AWS_SECRET_ACCESS_KEY -e AWS_ACCESS_KEY_ID -e AWS_DEFAULT_REGION=us-west-2 codespaces sh ./destroy-aws.sh
+          docker run -v $(pwd):/app --workdir /app/examples/test -e AWS_SECRET_ACCESS_KEY -e AWS_ACCESS_KEY_ID -e AWS_DEFAULT_REGION=us-west-2 ghcr.io/glueops/codespaces:v0.146.0 sh ./destroy-aws.sh
         if: always()
 
