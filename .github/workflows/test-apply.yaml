@@ -116,11 +116,15 @@ jobs:
         if: always()
         run: tofu destroy -auto-approve
       
+      # aws-nuke fallback in case `tofu destroy` left anything behind. Runs directly
+      # on the runner: destroy-aws.sh just downloads the aws-nuke binary (wget/tar are
+      # present on ubuntu-latest) and runs it against nuke.yaml in the working
+      # directory
       - name: Run AWS Destroy Only (in case previous step failed)
-        env:
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_KEY }}
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY }}
-        run: |
-          docker run -v $(pwd):/app --workdir /app/examples/test -e AWS_SECRET_ACCESS_KEY -e AWS_ACCESS_KEY_ID -e AWS_DEFAULT_REGION=us-west-2 ghcr.io/glueops/codespaces:v0.146.0 sh ./destroy-aws.sh
         if: always()
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_KEY }}
+          AWS_DEFAULT_REGION: us-west-2
+        run: bash destroy-aws.sh
 
