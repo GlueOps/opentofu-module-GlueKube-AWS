@@ -1,6 +1,12 @@
 blocklist:
 - "0123456789" # Keep listing any accounts you want to ensure do NOT get touched. If you did this properly and are using IAM credentials that only have access to your sub account then this is less important and could be left with this default/invalid value
 
+# The test account has no IAM account alias set. aws-nuke aborts on aliasless
+# accounts as a safety guard; listing the account here (together with the
+# --no-alias-check CLI flag in destroy-aws.sh) opts it out of that check.
+bypass-alias-check-accounts:
+- "722741357097"
+
 accounts:
   722741357097: # EVERYTHING IN THIS ACCOUNT GETS DESTROYED!!!
     presets:
