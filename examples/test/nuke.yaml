@@ -8,34 +8,32 @@ bypass-alias-check-accounts:
 - "722741357097"
 
 accounts:
-  722741357097: # EVERYTHING IN THIS ACCOUNT GETS DESTROYED!!!
-    presets:
-      - common #these presets basically say exclude certain things, these are things we want to keep so we can easily provision again into this account later
-  
-presets:
-  common:
-    filters:
-      IAMRole:
-      - type: regex
-        value: '.*OrganizationAccountAccessRole.*|.*glueops-captain.*'
-      IAMRolePolicyAttachment:
-      - type: regex
-        value: '.*OrganizationAccountAccessRole.*|.*glueops-captain.*'
-      OpsWorksUserProfile:
-      - type: regex
-        value: '.*OrganizationAccountAccessRole.*|.*glueops-captain.*'
-      IAMUser:
-      - "glueops-deployment-svc" # Update `glueops-deployment-svc-account-name` to whatever your IAM user you created is called
-      IAMUserPolicyAttachment:
-      - "glueops-deployment-svc -> AdministratorAccess" # Update `glueops-deployment-svc-account-name` to whatever your IAM user you created is called
-      IAMUserAccessKey:
-      - "glueops-deployment-svc -> AKIA2QRV55IUZU2PG6PT" #Update `glueops-deployment-svc-account-name` to whatever your IAM user you created is called AND change `ABCDEFGHIJKLMNOPQRST` to whatever the AccessKey ID actually is from when you created it.
+  722741357097: {} # only the resource-types below are ever touched in this account
 
+# Allowlist: nuke ONLY considers the resource types this module provisions, so
+# IAM roles, SSO/Identity Center, S3, KMS, and everything else are never
+# scanned or deleted. Keep this list in sync with the module's AWS resources:
+#   - direct resources: aws_instance, aws_security_group(_rule), aws_vpc_endpoint,
+#     aws_vpc_peering_connection_accepter, aws_route
+#   - terraform-aws-modules/vpc/aws (network.tf): vpc, subnets, route tables,
+#     internet gateway, NAT gateways, EIPs
+# EC2 instances also implicitly create root EBS volumes and ENIs, which must be
+# included so the VPC can be torn down.
 resource-types:
-  excludes:
-    # don't nuke OpenSearch Packages, see https://github.com/rebuy-de/aws-nuke/issues/1123
-    - OSPackage
-
+  includes:
+    - EC2Instance
+    - EC2Volume                     # instance root EBS volumes
+    - EC2NetworkInterface           # instance ENIs (block VPC/subnet deletion if left)
+    - EC2SecurityGroup              # aws_security_group (+ _rule)
+    - EC2VPCEndpoint                # aws_vpc_endpoint (s3)
+    - EC2VPCPeeringConnection       # aws_vpc_peering_connection_accepter
+    - EC2VPC
+    - EC2Subnet
+    - EC2RouteTable                 # covers aws_route / route table associations
+    - EC2InternetGateway
+    - EC2InternetGatewayAttachment
+    - EC2NATGateway
+    - EC2Address                    # NAT gateway EIPs
 
 regions: #this regions list was last updated on April 2, 2022.
 - global
