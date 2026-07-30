@@ -139,7 +139,7 @@ jobs:
       # Runs on the same condition as destroy, and with always() so leftovers are still
       # cleaned even if the destroy above failed partway.
       - name: Nuke AutoGlue org
-        if: ${{ always() && steps.init.outcome == 'success' && (inputs.mode == 'destroy-only' || inputs.destroy) }}
+        if: always()
         env:
           AUTOGLUE_BASE_URL: ${{ secrets.AUTOGLUE_BASE_URL }}
           AUTOGLUE_ORG_KEY: ${{ secrets.AUTOGLUE_KEY }}
