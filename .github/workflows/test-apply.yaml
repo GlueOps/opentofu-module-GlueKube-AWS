@@ -56,7 +56,6 @@ jobs:
       # AWS provider credentials
       TF_VAR_aws_access_key: ${{ secrets.AWS_ACCESS_KEY }}
       TF_VAR_aws_secret_key: ${{ secrets.AWS_SECRET_KEY }}
-      TF_VAR_aws_session_token: ${{ secrets.AWS_SESSION_TOKEN }}
       # network / compute
       TF_VAR_node_ami: ${{ secrets.NODE_AMI }}
       TF_VAR_bastion_ami: ${{ secrets.BASTION_AMI }}
@@ -94,30 +93,23 @@ jobs:
           TAG: ${{ inputs.gluekube_docker_tag }}
         run: echo "TF_VAR_gluekube_docker_tag=${TAG}" >> "$GITHUB_ENV"
       
-      # aws-nuke fallback in case `tofu destroy` left anything behind. Runs directly
-      # on the runner: destroy-aws.sh just downloads the aws-nuke binary (wget/tar are
-      # present on ubuntu-latest) and runs it against nuke.yaml in the working
-      # directory
-      - name: Run AWS Destroy Only (in case previous step failed)
+      - name: Pre-nuke AWS
         if: always()
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_KEY }}
-          AWS_DEFAULT_REGION: us-west-2
-        run: bash destroy-aws.sh
+        uses: GlueOps/github-actions-gluekube-e2e/nuke-aws@main
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_KEY }}
+          aws-region: us-west-2
       
-      # Backstop cleanup: delete any AutoGlue org resources left behind after destroy.
-      # Runs on the same condition as destroy, and with always() so leftovers are still
-      # cleaned even if the destroy above failed partway.
-      - name: Nuke AutoGlue org
-        if: always()
-        env:
-          AUTOGLUE_BASE_URL: ${{ secrets.AUTOGLUE_BASE_URL }}
-          AUTOGLUE_ORG_KEY: ${{ secrets.AUTOGLUE_KEY }}
-          AUTOGLUE_ORG_SECRET: ${{ secrets.AUTOGLUE_ORG_SECRET }}
-        run: |
-          python -m pip install --quiet requests
-          python autoglue_nuke.py
+
+      - name: Pre-Nuke AutoGlue org
+        if: ${{ always() }}
+        continue-on-error: true
+        uses: GlueOps/github-actions-gluekube-e2e/nuke-autoglue@main
+        with:
+          base-url: ${{ secrets.AUTOGLUE_BASE_URL }}
+          org-key: ${{ secrets.AUTOGLUE_KEY }}
+          org-secret: ${{ secrets.AUTOGLUE_ORG_SECRET }}
 
       - name: Tofu init
         run: tofu init
@@ -126,49 +118,43 @@ jobs:
         run: tofu apply -auto-approve
 
       - name: Invoke AutoGlue kubernetes setup
-        env:
-          BASE_URL: ${{ secrets.AUTOGLUE_BASE_URL }}
-          API_KEY: ${{ secrets.AUTOGLUE_API_KEY }}
-          ORG_NAME: ${{ secrets.AUTOGLUE_ORG_NAME }}
-          CLUSTER_NAME: ${{ secrets.AUTOGLUE_CLUSTER_NAME }}
-          # Scheduled runs have no inputs, so fall back to the same default.
-          ACTION_MAKE_TARGET: ${{ inputs.action_make_target || 'setup' }}
-        run: bash invoke_autoglue.sh
+        uses: GlueOps/github-actions-gluekube-e2e/invoke-autoglue@main
+        with:
+          base-url: ${{ secrets.AUTOGLUE_BASE_URL }}
+          api-key: ${{ secrets.AUTOGLUE_API_KEY }}
+          org-name: ${{ secrets.AUTOGLUE_ORG_NAME }}
+          cluster-name: ${{ secrets.AUTOGLUE_CLUSTER_NAME }}
+          # inputs is empty on scheduled runs, so fall back to the dispatch default.
+          # The action guards this again internally, since GitHub does not apply an
+          # input default to a value that is present but empty.
+          action-make-target: ${{ inputs.action_make_target || 'setup' }}
 
       - name: Check cluster health
-        env:
-          BASE_URL: ${{ secrets.AUTOGLUE_BASE_URL }}
-          API_KEY: ${{ secrets.AUTOGLUE_API_KEY }}
-          ORG_NAME: ${{ secrets.AUTOGLUE_ORG_NAME }}
-        run: bash check_cluster_health.sh
+        uses: GlueOps/github-actions-gluekube-e2e/check-cluster-health@main
+        with:
+          base-url: ${{ secrets.AUTOGLUE_BASE_URL }}
+          api-key: ${{ secrets.AUTOGLUE_API_KEY }}
+          org-name: ${{ secrets.AUTOGLUE_ORG_NAME }}
 
       - name: Tofu destroy
         if: always()
         continue-on-error: true
         run: tofu destroy -auto-approve
       
-      # aws-nuke fallback in case `tofu destroy` left anything behind. Runs directly
-      # on the runner: destroy-aws.sh just downloads the aws-nuke binary (wget/tar are
-      # present on ubuntu-latest) and runs it against nuke.yaml in the working
-      # directory
-      - name: Run AWS Destroy Only (in case previous step failed)
+      - name: Run AWS nuke
         if: always()
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_KEY }}
-          AWS_DEFAULT_REGION: us-west-2
-        run: bash destroy-aws.sh
-      
-      # Backstop cleanup: delete any AutoGlue org resources left behind after destroy.
-      # Runs on the same condition as destroy, and with always() so leftovers are still
-      # cleaned even if the destroy above failed partway.
+        uses: GlueOps/github-actions-gluekube-e2e/nuke-aws@main
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_KEY }}
+          aws-region: us-west-2
+
       - name: Nuke AutoGlue org
-        if: always()
-        env:
-          AUTOGLUE_BASE_URL: ${{ secrets.AUTOGLUE_BASE_URL }}
-          AUTOGLUE_ORG_KEY: ${{ secrets.AUTOGLUE_KEY }}
-          AUTOGLUE_ORG_SECRET: ${{ secrets.AUTOGLUE_ORG_SECRET }}
-        run: |
-          python -m pip install --quiet requests
-          python autoglue_nuke.py
+        if: ${{ always() }}
+        continue-on-error: true
+        uses: GlueOps/github-actions-gluekube-e2e/nuke-autoglue@main
+        with:
+          base-url: ${{ secrets.AUTOGLUE_BASE_URL }}
+          org-key: ${{ secrets.AUTOGLUE_KEY }}
+          org-secret: ${{ secrets.AUTOGLUE_ORG_SECRET }}
 
