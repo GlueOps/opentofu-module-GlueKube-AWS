@@ -3,9 +3,12 @@ name: test-apply
 # End-to-end test of `module "captain"`. Runs daily on a schedule, and on demand
 # via workflow_dispatch.
 #
-# Flow: tofu init -> apply (real AWS + AutoGlue resources) -> invoke the AutoGlue
-# kubernetes-setup action (examples/test/invoke_autoglue.sh) -> ssh to a master and run
-# kubectl (examples/test/check_cluster_health.sh) -> tofu destroy (always).
+# Flow: pre-flight nukes -> tofu init -> apply (real AWS + AutoGlue resources) ->
+# invoke the AutoGlue kubernetes-setup action -> ssh to a master and assert cluster
+# health -> tofu destroy -> backstop nukes -> teardown verdict.
+#
+# The invoke / health-check / nuke steps live in GlueOps/github-actions-gluekube-e2e
+# and are shared with the Proxmox module; they are no longer scripts in examples/test.
 #
 # Required repository secrets (mapped to TF_VAR_* below):
 #   AWS_ACCESS_KEY                 AWS_SECRET_KEY                 AWS_SESSION_TOKEN (optional)
@@ -14,7 +17,7 @@ name: test-apply
 #   AUTOGLUE_BASE_URL
 #   ROUTE53_AWS_ACCESS_KEY_ID      ROUTE53_AWS_SECRET_ACCESS_KEY
 #   DOMAIN_NAME                    ROUTE53_ZONE_ID                AUTOGLUE_CREDENTIAL_ID
-# Additional secrets for the AutoGlue action invocation (invoke_autoglue.sh):
+# Additional secrets for the AutoGlue action invocation (invoke-autoglue):
 #   AUTOGLUE_API_KEY  (X-API-KEY header)            AUTOGLUE_ORG_NAME  (resolved to org id)
 # Non-secret defaults (aws_region, azs, instance types, CIDRs, cloud) come from
 # examples/test/variables.tf; override there if needed.
@@ -49,41 +52,36 @@ concurrency:
 jobs:
   test-apply:
     runs-on: ubuntu-latest
+    # Backstop only: invoke-autoglue gives up on its own at 45m with a message naming
+    # the last status. This stops a hang elsewhere from burning the 6h default — which
+    # matters because a killed job takes the runner's local tofu state with it, so
+    # `tofu destroy` can never run for that cluster and cleanup falls to the nukes.
+    timeout-minutes: 90
     defaults:
       run:
         working-directory: examples/test
-    env:
-      # AWS provider credentials
-      TF_VAR_aws_access_key: ${{ secrets.AWS_ACCESS_KEY }}
-      TF_VAR_aws_secret_key: ${{ secrets.AWS_SECRET_KEY }}
-      # network / compute
-      TF_VAR_node_ami: ${{ secrets.NODE_AMI }}
-      TF_VAR_bastion_ami: ${{ secrets.BASTION_AMI }}
-      # AutoGlue integration
-      TF_VAR_autoglue_cluster_name: ${{ secrets.AUTOGLUE_CLUSTER_NAME }}
-      TF_VAR_autoglue_key: ${{ secrets.AUTOGLUE_KEY }}
-      TF_VAR_autoglue_org_secret: ${{ secrets.AUTOGLUE_ORG_SECRET }}
-      TF_VAR_autoglue_base_url: ${{ secrets.AUTOGLUE_BASE_URL }}
-      # Route53 config
-      TF_VAR_route53_aws_access_key_id: ${{ secrets.ROUTE53_AWS_ACCESS_KEY_ID }}
-      TF_VAR_route53_aws_secret_access_key: ${{ secrets.ROUTE53_AWS_SECRET_ACCESS_KEY }}
-      TF_VAR_domain_name: ${{ secrets.DOMAIN_NAME }}
-      TF_VAR_route53_zone_id: ${{ secrets.ROUTE53_ZONE_ID }}
-      TF_VAR_autoglue_credential_id: ${{ secrets.AUTOGLUE_CREDENTIAL_ID }}
+    # NOTE: TF_VAR_* deliberately live on the `Tofu apply` / `Tofu destroy` steps
+    # rather than here. At job level every step inherits them — including
+    # actions/checkout, actions/setup-python and the third-party Tailscale action —
+    # so third-party code ran with the full set of cloud credentials in its
+    # environment. Pinning action SHAs limits which code runs; this limits what that
+    # code can reach. `tofu init` needs none of them: there is no backend block, and
+    # provider configuration is assembled from variables in main.tf, which only
+    # apply/destroy evaluate.
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
       - name: Setup OpenTofu
-        uses: opentofu/setup-opentofu@v1
-      
-
-      # Needed by autoglue_nuke.py (the post-destroy cleanup step). setup-python gives a
-      # pip that is not externally-managed, so `pip install requests` works cleanly.
-      - name: Setup Python
-        uses: actions/setup-python@v5
+        uses: opentofu/setup-opentofu@9d84900f3238fab8cd84ce47d658d25dd008be2f # v1.0.8
         with:
-          python-version: "3.12"
+          # Pinned so an OpenTofu release cannot break the nightly on a day nobody
+          # touched the code — an unpinned break presents as a module regression and
+          # costs a day of chasing the wrong cause. Bump deliberately.
+          tofu_version: "1.12.5"
+
+      # Python is no longer set up here: the nuke-* actions own actions/setup-python
+      # and install their own pinned requests, so the caller carries no Python setup.
 
       # Only override the tag when the dispatch input is non-empty, so a blank input
       # keeps the default from examples/test/variables.tf. Applies to apply + destroy.
@@ -93,19 +91,20 @@ jobs:
           TAG: ${{ inputs.gluekube_docker_tag }}
         run: echo "TF_VAR_gluekube_docker_tag=${TAG}" >> "$GITHUB_ENV"
       
+      # Pre-flight clean slate. Deliberately neither always() nor continue-on-error:
+      # if we cannot prove the account and the org are empty before applying, the
+      # health check downstream can pass against leftovers from a previous run
+      # instead of the cluster this run built. Failing here is cheaper than a false
+      # green. (Nothing has run yet at this point, so always() bought nothing anyway.)
       - name: Pre-nuke AWS
-        if: always()
-        uses: GlueOps/github-actions-gluekube-e2e/nuke-aws@main
+        uses: GlueOps/github-actions-gluekube-e2e/nuke-aws@66f2febb1c31b6a8a75f1fb35b38c9765d327169 # v0.0.1
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_KEY }}
           aws-region: us-west-2
-      
 
       - name: Pre-Nuke AutoGlue org
-        if: ${{ always() }}
-        continue-on-error: true
-        uses: GlueOps/github-actions-gluekube-e2e/nuke-autoglue@main
+        uses: GlueOps/github-actions-gluekube-e2e/nuke-autoglue@66f2febb1c31b6a8a75f1fb35b38c9765d327169 # v0.0.1
         with:
           base-url: ${{ secrets.AUTOGLUE_BASE_URL }}
           org-key: ${{ secrets.AUTOGLUE_KEY }}
@@ -114,11 +113,32 @@ jobs:
       - name: Tofu init
         run: tofu init
 
+      # KEEP IN SYNC with the identical block on `Tofu destroy` below. Destroy has to
+      # re-evaluate the same provider configuration, so a variable added here and not
+      # there breaks teardown rather than apply.
       - name: Tofu apply
+        env:
+          # AWS provider credentials
+          TF_VAR_aws_access_key: ${{ secrets.AWS_ACCESS_KEY }}
+          TF_VAR_aws_secret_key: ${{ secrets.AWS_SECRET_KEY }}
+          # network / compute
+          TF_VAR_node_ami: ${{ secrets.NODE_AMI }}
+          TF_VAR_bastion_ami: ${{ secrets.BASTION_AMI }}
+          # AutoGlue integration
+          TF_VAR_autoglue_cluster_name: ${{ secrets.AUTOGLUE_CLUSTER_NAME }}
+          TF_VAR_autoglue_key: ${{ secrets.AUTOGLUE_KEY }}
+          TF_VAR_autoglue_org_secret: ${{ secrets.AUTOGLUE_ORG_SECRET }}
+          TF_VAR_autoglue_base_url: ${{ secrets.AUTOGLUE_BASE_URL }}
+          # Route53 config
+          TF_VAR_route53_aws_access_key_id: ${{ secrets.ROUTE53_AWS_ACCESS_KEY_ID }}
+          TF_VAR_route53_aws_secret_access_key: ${{ secrets.ROUTE53_AWS_SECRET_ACCESS_KEY }}
+          TF_VAR_domain_name: ${{ secrets.DOMAIN_NAME }}
+          TF_VAR_route53_zone_id: ${{ secrets.ROUTE53_ZONE_ID }}
+          TF_VAR_autoglue_credential_id: ${{ secrets.AUTOGLUE_CREDENTIAL_ID }}
         run: tofu apply -auto-approve
 
       - name: Invoke AutoGlue kubernetes setup
-        uses: GlueOps/github-actions-gluekube-e2e/invoke-autoglue@main
+        uses: GlueOps/github-actions-gluekube-e2e/invoke-autoglue@66f2febb1c31b6a8a75f1fb35b38c9765d327169 # v0.0.1
         with:
           base-url: ${{ secrets.AUTOGLUE_BASE_URL }}
           api-key: ${{ secrets.AUTOGLUE_API_KEY }}
@@ -130,31 +150,141 @@ jobs:
           action-make-target: ${{ inputs.action_make_target || 'setup' }}
 
       - name: Check cluster health
-        uses: GlueOps/github-actions-gluekube-e2e/check-cluster-health@main
+        uses: GlueOps/github-actions-gluekube-e2e/check-cluster-health@66f2febb1c31b6a8a75f1fb35b38c9765d327169 # v0.0.1
         with:
           base-url: ${{ secrets.AUTOGLUE_BASE_URL }}
           api-key: ${{ secrets.AUTOGLUE_API_KEY }}
           org-name: ${{ secrets.AUTOGLUE_ORG_NAME }}
+          # Restricts the bastion/master lookup to THIS run's cluster, so a leftover
+          # cluster from a previous run cannot be checked instead. The pre-flight
+          # nukes above are the primary isolation guarantee; this is the backstop.
+          cluster-name: ${{ secrets.AUTOGLUE_CLUSTER_NAME }}
 
+      # Teardown always runs, so no run can leave the cluster behind. continue-on-error
+      # keeps a partial/failed destroy from blocking the nukes below, which are what
+      # actually guarantee cleanup here.
+      #
+      # A failed destroy does NOT fail the job. It is known to fail intermittently
+      # against this stack, and with no remote state the nukes are the teardown
+      # mechanism of record — destroy is best-effort, the nukes are the guarantee.
+      # The "Teardown verdict" step still reports the failure as a warning so it is
+      # visible rather than silent; what turns the job red is a nuke failing.
       - name: Tofu destroy
-        if: always()
+        id: destroy
+        if: ${{ always() }}
         continue-on-error: true
+        # KEEP IN SYNC with the identical block on `Tofu apply` above.
+        env:
+          # AWS provider credentials
+          TF_VAR_aws_access_key: ${{ secrets.AWS_ACCESS_KEY }}
+          TF_VAR_aws_secret_key: ${{ secrets.AWS_SECRET_KEY }}
+          # network / compute
+          TF_VAR_node_ami: ${{ secrets.NODE_AMI }}
+          TF_VAR_bastion_ami: ${{ secrets.BASTION_AMI }}
+          # AutoGlue integration
+          TF_VAR_autoglue_cluster_name: ${{ secrets.AUTOGLUE_CLUSTER_NAME }}
+          TF_VAR_autoglue_key: ${{ secrets.AUTOGLUE_KEY }}
+          TF_VAR_autoglue_org_secret: ${{ secrets.AUTOGLUE_ORG_SECRET }}
+          TF_VAR_autoglue_base_url: ${{ secrets.AUTOGLUE_BASE_URL }}
+          # Route53 config
+          TF_VAR_route53_aws_access_key_id: ${{ secrets.ROUTE53_AWS_ACCESS_KEY_ID }}
+          TF_VAR_route53_aws_secret_access_key: ${{ secrets.ROUTE53_AWS_SECRET_ACCESS_KEY }}
+          TF_VAR_domain_name: ${{ secrets.DOMAIN_NAME }}
+          TF_VAR_route53_zone_id: ${{ secrets.ROUTE53_ZONE_ID }}
+          TF_VAR_autoglue_credential_id: ${{ secrets.AUTOGLUE_CREDENTIAL_ID }}
         run: tofu destroy -auto-approve
-      
+
+      # Backstop cleanup: aws-nuke over the allowlisted resource types in nuke.yaml.
+      # always() so leftovers are still cleaned even if apply or destroy failed partway.
+      # Deliberately NOT continue-on-error: with no remote state, the nukes are the only
+      # teardown guarantee, so a nuke that fails must turn the job red on its own.
       - name: Run AWS nuke
-        if: always()
-        uses: GlueOps/github-actions-gluekube-e2e/nuke-aws@main
+        id: nuke_aws
+        if: ${{ always() }}
+        uses: GlueOps/github-actions-gluekube-e2e/nuke-aws@66f2febb1c31b6a8a75f1fb35b38c9765d327169 # v0.0.1
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_KEY }}
           aws-region: us-west-2
 
+      # Backstop cleanup: delete any AutoGlue org resources left behind after destroy.
+      # Same always() / not-continue-on-error rationale as the AWS nuke above.
       - name: Nuke AutoGlue org
+        id: nuke_autoglue
         if: ${{ always() }}
-        continue-on-error: true
-        uses: GlueOps/github-actions-gluekube-e2e/nuke-autoglue@main
+        uses: GlueOps/github-actions-gluekube-e2e/nuke-autoglue@66f2febb1c31b6a8a75f1fb35b38c9765d327169 # v0.0.1
         with:
           base-url: ${{ secrets.AUTOGLUE_BASE_URL }}
           org-key: ${{ secrets.AUTOGLUE_KEY }}
           org-secret: ${{ secrets.AUTOGLUE_ORG_SECRET }}
+
+      # Last step in the job, so every teardown path above has already run.
+      #
+      # What this step is for: teardown used to be able to fail completely while the job
+      # stayed green, and you found out from the AWS bill. It reports every teardown
+      # outcome into the step summary so nothing is silent.
+      #
+      # What turns the job RED is cleanup not having happened — i.e. a nuke failing.
+      # A failed `tofu destroy` on its own does NOT, because:
+      #   - it fails intermittently against this stack, and a nightly that goes red for
+      #     an expected failure trains people to ignore red, which is worse than the
+      #     failure itself;
+      #   - with no remote state (#402) the nukes are the teardown mechanism of record.
+      #     Destroy is best-effort; the nukes are the guarantee.
+      # It is still surfaced as a ::warning:: annotation, so it shows on the run without
+      # being fatal — invisible is what we were fixing, not non-fatal.
+      #
+      # The cases:
+      #   nukes ok, destroy ok      -> green, clean
+      #   nukes ok, destroy failed  -> green with a warning. Nothing is left running.
+      #   a nuke failed             -> RED. Possibly live orphaned infrastructure, and
+      #                                if destroy failed too, almost certainly.
+      - name: Teardown verdict
+        if: ${{ always() }}
+        env:
+          DESTROY: ${{ steps.destroy.outcome }}
+          NUKE_AWS: ${{ steps.nuke_aws.outcome }}
+          NUKE_AUTOGLUE: ${{ steps.nuke_autoglue.outcome }}
+        run: |
+          set -euo pipefail
+
+          # Anything that is not "success" counts as not cleaned up, including "skipped":
+          # a nuke that never ran has proved nothing about what is left behind.
+          nukes_ok=true
+          if [ "$NUKE_AWS" != "success" ] || [ "$NUKE_AUTOGLUE" != "success" ]; then
+            nukes_ok=false
+          fi
+
+          {
+            echo "### Teardown"
+            echo ""
+            echo "| Step | Outcome | Fails the job? |"
+            echo "| --- | --- | --- |"
+            echo "| tofu destroy | \`${DESTROY}\` | no — best-effort |"
+            echo "| nuke AWS account | \`${NUKE_AWS}\` | yes |"
+            echo "| nuke AutoGlue org | \`${NUKE_AUTOGLUE}\` | yes |"
+            echo ""
+          } | tee -a "${GITHUB_STEP_SUMMARY:-/dev/null}"
+
+          if [ "$nukes_ok" = true ]; then
+            if [ "$DESTROY" = "success" ]; then
+              echo "Teardown clean: destroy succeeded and both nukes came back empty."
+            else
+              echo "::warning title=tofu destroy did not succeed::'tofu destroy' did not succeed (outcome: ${DESTROY}), but both nukes then ran clean, so nothing should be left running. Not failing the job: destroy is best-effort here and the nukes are the teardown mechanism of record."
+              echo "Teardown completed via the nukes; 'tofu destroy' outcome was '${DESTROY}'."
+            fi
+            exit 0
+          fi
+
+          if [ "$DESTROY" != "success" ]; then
+            echo "ERROR: teardown FAILED and the nukes did not clean up after it" >&2
+            echo "(destroy: ${DESTROY}, aws: ${NUKE_AWS}, autoglue: ${NUKE_AUTOGLUE})." >&2
+            echo "There is very likely live orphaned infrastructure in the AWS account" >&2
+            echo "and/or the AutoGlue org right now. Check both by hand before re-running." >&2
+            exit 1
+          fi
+
+          echo "ERROR: 'tofu destroy' succeeded but a nuke did not (aws: ${NUKE_AWS}, autoglue: ${NUKE_AUTOGLUE})." >&2
+          echo "Resources the nuke could not delete may still exist. Check the failing nuke's log." >&2
+          exit 1
 

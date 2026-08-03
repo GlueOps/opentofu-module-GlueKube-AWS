@@ -47,3 +47,7 @@ hosts.ini
 **/inventory/*.yaml
 # Old terraform directory (deprecated)
 terraform/
+
+# Python bytecode (the nuke/health scripts are Python; these are build artifacts)
+__pycache__/
+*.pyc
