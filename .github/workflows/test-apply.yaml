@@ -97,14 +97,14 @@ jobs:
       # instead of the cluster this run built. Failing here is cheaper than a false
       # green. (Nothing has run yet at this point, so always() bought nothing anyway.)
       - name: Pre-nuke AWS
-        uses: GlueOps/github-actions-gluekube-e2e/nuke-aws@66f2febb1c31b6a8a75f1fb35b38c9765d327169 # v0.0.1
+        uses: GlueOps/github-actions-gluekube-e2e/nuke-aws@2fa9cd245e87b55a5ea5d863e8427f4a7e06abf3 # v1.0.1
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_KEY }}
           aws-region: us-west-2
 
       - name: Pre-Nuke AutoGlue org
-        uses: GlueOps/github-actions-gluekube-e2e/nuke-autoglue@66f2febb1c31b6a8a75f1fb35b38c9765d327169 # v0.0.1
+        uses: GlueOps/github-actions-gluekube-e2e/nuke-autoglue@2fa9cd245e87b55a5ea5d863e8427f4a7e06abf3 # v1.0.1
         with:
           base-url: ${{ secrets.AUTOGLUE_BASE_URL }}
           org-key: ${{ secrets.AUTOGLUE_KEY }}
@@ -138,7 +138,7 @@ jobs:
         run: tofu apply -auto-approve
 
       - name: Invoke AutoGlue kubernetes setup
-        uses: GlueOps/github-actions-gluekube-e2e/invoke-autoglue@66f2febb1c31b6a8a75f1fb35b38c9765d327169 # v0.0.1
+        uses: GlueOps/github-actions-gluekube-e2e/invoke-autoglue@2fa9cd245e87b55a5ea5d863e8427f4a7e06abf3 # v1.0.1
         with:
           base-url: ${{ secrets.AUTOGLUE_BASE_URL }}
           api-key: ${{ secrets.AUTOGLUE_API_KEY }}
@@ -150,7 +150,7 @@ jobs:
           action-make-target: ${{ inputs.action_make_target || 'setup' }}
 
       - name: Check cluster health
-        uses: GlueOps/github-actions-gluekube-e2e/check-cluster-health@66f2febb1c31b6a8a75f1fb35b38c9765d327169 # v0.0.1
+        uses: GlueOps/github-actions-gluekube-e2e/check-cluster-health@2fa9cd245e87b55a5ea5d863e8427f4a7e06abf3 # v1.0.1
         with:
           base-url: ${{ secrets.AUTOGLUE_BASE_URL }}
           api-key: ${{ secrets.AUTOGLUE_API_KEY }}
@@ -201,7 +201,7 @@ jobs:
       - name: Run AWS nuke
         id: nuke_aws
         if: ${{ always() }}
-        uses: GlueOps/github-actions-gluekube-e2e/nuke-aws@66f2febb1c31b6a8a75f1fb35b38c9765d327169 # v0.0.1
+        uses: GlueOps/github-actions-gluekube-e2e/nuke-aws@2fa9cd245e87b55a5ea5d863e8427f4a7e06abf3 # v1.0.1
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_KEY }}
@@ -212,7 +212,7 @@ jobs:
       - name: Nuke AutoGlue org
         id: nuke_autoglue
         if: ${{ always() }}
-        uses: GlueOps/github-actions-gluekube-e2e/nuke-autoglue@66f2febb1c31b6a8a75f1fb35b38c9765d327169 # v0.0.1
+        uses: GlueOps/github-actions-gluekube-e2e/nuke-autoglue@2fa9cd245e87b55a5ea5d863e8427f4a7e06abf3 # v1.0.1
         with:
           base-url: ${{ secrets.AUTOGLUE_BASE_URL }}
           org-key: ${{ secrets.AUTOGLUE_KEY }}
