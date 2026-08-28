@@ -42,7 +42,7 @@ module "captain" {
   vpc_cidr_block        = "10.16.0.0/16"
   azs                   = ["us-west-2a", "us-west-2b", "us-west-2c"]
   region                = var.provider_credentials.region
-  enable_nat_gateway    = true
+  enable_nat_gateway    = true # this should create a nat on each az defined above
 
   cluster_metadata = {
     calico_network_calico_cidr = "172.16.0.0/16"
