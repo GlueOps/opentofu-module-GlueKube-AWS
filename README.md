@@ -197,6 +197,7 @@ module "captain" {
 - **Validation**: Input validation for CIDR blocks and node pool configurations
 
 
+<!-- BEGIN_TF_DOCS -->
 ## Requirements
 
 | Name | Version |
