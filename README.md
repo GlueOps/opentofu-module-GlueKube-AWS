@@ -198,6 +198,156 @@ module "captain" {
 
 
 <!-- BEGIN_TF_DOCS -->
+# opentofu-module-GlueKube-AWS
+
+This opentofu module deploys a Kubernetes cluster on AWS using GlueKube.
+
+```hcl
+
+module "captain" {
+  source                = "git::https://github.com/GlueOps/opentofu-module-GlueKube-AWS.git?ref=v0.1.2" # x-release-please-version
+  gluekube_docker_image = "ghcr.io/glueops/gluekube"
+  gluekube_docker_tag   = "v1.34.5-gluekube.27"
+
+  provider_credentials = var.provider_credentials
+
+  vpc_cidr_block     = "10.0.0.0/16"
+  azs                = ["us-west-2a", "us-west-2b", "us-west-2c"]
+  region             = var.provider_credentials.region
+  enable_nat_gateway = true
+
+  cluster_metadata = {
+    calico_network_calico_cidr = "172.16.0.0/16"
+    network_service_cidr       = "192.168.0.0/16"
+    cloud                      = "aws"
+  }
+
+  bastion = {
+    instance_type = "t3.large"
+    image         = "" # empty selects the latest Ubuntu 24.04 AMI
+  }
+
+  autoglue = {
+    autoglue_cluster_name = var.autoglue_cluster_name
+
+    credentials = {
+      autoglue_key        = var.autoglue_key
+      autoglue_org_secret = var.autoglue_org_secret
+      base_url            = var.autoglue_base_url
+    }
+
+    route_53_config = {
+      aws_access_key_id     = var.aws_access_key_id
+      aws_secret_access_key = var.aws_secret_access_key
+      aws_region            = var.route53_region
+      domain_name           = var.domain_name
+      zone_id               = var.route53_zone_id
+      credential_id         = var.autoglue_credentials_id
+    }
+  }
+
+  node_pools = [
+    {
+      "instance_type" : "c6a.large",
+      "role" : "master",
+      "name" : "master-node-pool-1",
+      "image" : "ami-04a649374b43dc2a7",
+      "node_count" : 3,
+      "subnet" : "private",
+      "kubernetes_labels" : {},
+      "kubernetes_taints" : []
+    },
+    {
+      "instance_type" : "c6a.large",
+      "role" : "worker",
+      "name" : "glueops-platform-node-pool",
+      "image" : "ami-04a649374b43dc2a7",
+      "subnet" : "private",
+      "node_count" : 3,
+
+      "kubernetes_labels" : {
+        "glueops.dev/role" : "glueops-platform"
+      },
+      "kubernetes_taints" : [
+        {
+          key    = "glueops.dev/role"
+          value  = "glueops-platform"
+          effect = "NoSchedule"
+        }
+      ]
+    },
+    {
+      "instance_type" : "c6a.large",
+      "role" : "worker",
+      "name" : "clusterwide-node-pool-4",
+      "image" : "ami-04a649374b43dc2a7",
+      "subnet" : "private",
+      "node_count" : 2,
+
+      "kubernetes_labels" : {},
+      "kubernetes_taints" : []
+    },
+    {
+      "instance_type" : "c6a.large",
+      "role" : "worker",
+      "name" : "platform-loadbalancer-node-pool",
+      "image" : "ami-04a649374b43dc2a7",
+      "subnet" : "public",
+      "node_count" : 2,
+
+      "kubernetes_labels" : {
+        "use-as-loadbalancer" : "platform-traefik",
+      },
+      "kubernetes_taints" : [
+        {
+          key    = "dedicated"
+          value  = "platform-traefik"
+          effect = "NoSchedule"
+        }
+      ],
+    },
+    {
+      "instance_type" : "c6a.large",
+      "role" : "worker",
+      "name" : "public-loadbalancer-node-pool",
+      "image" : "ami-04a649374b43dc2a7",
+      "subnet" : "public",
+      "node_count" : 2,
+
+      "kubernetes_labels" : {
+        "use-as-loadbalancer" : "public-traefik",
+      },
+      "kubernetes_taints" : [
+        {
+          key    = "dedicated"
+          value  = "public-traefik"
+          effect = "NoSchedule"
+        }
+      ],
+    },
+    {
+      "instance_type" : "c6a.large",
+      "role" : "worker",
+      "name" : "nginx-loadbalancer-node-pool",
+      "image" : "ami-04a649374b43dc2a7",
+      "subnet" : "public",
+      "node_count" : 2,
+
+      "kubernetes_labels" : {
+        "use-as-loadbalancer" : "public",
+      },
+      "kubernetes_taints" : [
+        {
+          key    = "dedicated"
+          value  = "public"
+          effect = "NoSchedule"
+        }
+      ],
+    }
+  ]
+}
+```
+
 ## Requirements
 
 | Name | Version |
@@ -249,8 +399,9 @@ module "captain" {
 | <a name="input_bastion"></a> [bastion](#input\_bastion) | Bastion configuration. | <pre>object({<br/>    instance_type = string<br/>    image         = string<br/>    create        = optional(bool, true)<br/>  })</pre> | n/a | yes |
 | <a name="input_cluster_metadata"></a> [cluster\_metadata](#input\_cluster\_metadata) | Structured cluster metadata passed through to the autoglue-metadata module. All fields are required unless noted:<br/>  - calico\_network\_calico\_cidr: CIDR block for the Calico pod network (e.g. "10.244.0.0/16").<br/>  - network\_service\_cidr:       CIDR block for Kubernetes services (e.g. "10.96.0.0/12").<br/>  - cloud:                      Target cloud provider. One of: "aws", "proxmox", "hetzner".<br/>  - cloud\_vars:                 Optional map of cloud-specific overrides. When cloud is "proxmox",<br/>                                "calico\_node\_address\_autodetection\_v4" is required. | <pre>object({<br/>    calico_network_calico_cidr = string<br/>    network_service_cidr       = string<br/>    cloud                      = string<br/>    cloud_vars                 = optional(map(string), {}) # Holds the cloud-specific overrides<br/>  })</pre> | n/a | yes |
 | <a name="input_enable_nat_gateway"></a> [enable\_nat\_gateway](#input\_enable\_nat\_gateway) | Whether to enable NAT Gateway | `bool` | `true` | no |
+| <a name="input_enable_vpc_endpoints"></a> [enable\_vpc\_endpoints](#input\_enable\_vpc\_endpoints) | Whether to create the VPC endpoints (e.g. the S3 gateway endpoint). | `bool` | `true` | no |
 | <a name="input_gluekube_docker_image"></a> [gluekube\_docker\_image](#input\_gluekube\_docker\_image) | Docker image for GlueKube | `string` | `"ghcr.io/glueops/gluekube"` | no |
-| <a name="input_gluekube_docker_tag"></a> [gluekube\_docker\_tag](#input\_gluekube\_docker\_tag) | Docker tag for GlueKube | `string` | `"v0.0.12"` | no |
+| <a name="input_gluekube_docker_tag"></a> [gluekube\_docker\_tag](#input\_gluekube\_docker\_tag) | Docker tag for GlueKube | `string` | `"v1.34.5-gluekube.32"` | no |
 | <a name="input_node_pools"></a> [node\_pools](#input\_node\_pools) | List of node pools to create | <pre>list(object({<br/>    name                   = string<br/>    image                  = string<br/>    node_count             = number<br/>    instance_type          = string<br/>    storage_size_gb        = optional(number, 30)<br/>    role                   = string<br/>    subnet                 = optional(string, "private")<br/>    kubernetes_labels      = optional(map(string), {})<br/>    kubernetes_annotations = optional(map(string), {})<br/>    kubernetes_taints = list(object({<br/>      key    = string<br/>      value  = string<br/>      effect = string<br/>    }))<br/>    attached = optional(bool, true)<br/>  }))</pre> | n/a | yes |
 | <a name="input_peering_configs"></a> [peering\_configs](#input\_peering\_configs) | A list of maps containing VPC peering configuration details | <pre>list(object({<br/>    vpc_peering_connection_id = string<br/>    destination_cidr_block    = string<br/>    include_intra_routes      = optional(bool, false)<br/>  }))</pre> | `[]` | no |
 | <a name="input_provider_credentials"></a> [provider\_credentials](#input\_provider\_credentials) | AWS provider credentials configuration | <pre>object({<br/>    name          = string<br/>    access_key    = string<br/>    secret_key    = string<br/>    region        = string<br/>    session_token = optional(string)<br/>  })</pre> | n/a | yes |
