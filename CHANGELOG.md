@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.1](https://github.com/GlueOps/opentofu-module-GlueKube-AWS/compare/v0.4.0...v0.4.1) (2026-08-28)
+
+
+### Bug Fixes
+
+* Clarify NAT gateway configuration in README ([#50](https://github.com/GlueOps/opentofu-module-GlueKube-AWS/issues/50)) ([fd28965](https://github.com/GlueOps/opentofu-module-GlueKube-AWS/commit/fd28965e5968b50af99e18699e84e55e0a817f00))
+
 ## [0.4.0](https://github.com/GlueOps/opentofu-module-GlueKube-AWS/compare/v0.3.0...v0.4.0) (2026-08-28)
 
 
