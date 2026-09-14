@@ -16,11 +16,19 @@ module "node_pool" {
   cluster_name           = var.autoglue.autoglue_cluster_name
   attached               = each.value.attached
   region                 = var.region
+
+  network_dependency_ids = concat(
+    module.vpc.private_nat_gateway_route_ids,
+    module.vpc.private_route_table_association_ids,
+    module.vpc.public_route_table_association_ids,
+    module.vpc.intra_route_table_association_ids,
+    compact([module.vpc.public_internet_gateway_route_id]),
+  )
 }
 
 resource "autoglue_cluster_node_pools" "autoglue_cluster_node_pools" {
   cluster_id = autoglue_cluster.cluster.id
   node_pool_ids = [
-    for np in module.node_pool : np.node_pool_id  if np.attached
+    for np in module.node_pool : np.node_pool_id if np.attached
   ]
 }

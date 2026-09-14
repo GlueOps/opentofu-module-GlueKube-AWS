@@ -110,4 +110,6 @@ resource "aws_instance" "cluster_node" {
     Name = "${var.role}-${var.name}-${each.key}"
     Role = var.role
   }
+
+  depends_on = [var.network_dependency_ids]
 }
