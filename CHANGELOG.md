@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.5.0](https://github.com/GlueOps/opentofu-module-GlueKube-AWS/compare/v0.4.1...v0.5.0) (2026-09-14)
+
+
+### Features
+
+* add toggle for the bastion ([#57](https://github.com/GlueOps/opentofu-module-GlueKube-AWS/issues/57)) ([07cf616](https://github.com/GlueOps/opentofu-module-GlueKube-AWS/commit/07cf616c6488876c44db899e3a6693cd2283e9a1))
+
+
+### Bug Fixes
+
+* wait for NAT routes and route table associations before creating EC2 instances ([#55](https://github.com/GlueOps/opentofu-module-GlueKube-AWS/issues/55)) ([ee71cb1](https://github.com/GlueOps/opentofu-module-GlueKube-AWS/commit/ee71cb10066d02bd5d2a456c9ac7af4d5bdb4bf2))
+
 ## [0.4.1](https://github.com/GlueOps/opentofu-module-GlueKube-AWS/compare/v0.4.0...v0.4.1) (2026-08-28)
 
 
