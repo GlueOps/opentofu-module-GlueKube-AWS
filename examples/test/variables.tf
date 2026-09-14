@@ -85,6 +85,12 @@ variable "bastion_instance_type" {
   default     = "t3a.medium"
 }
 
+variable "bastion_create" {
+  type        = bool
+  description = "Whether to create the bastion host and its supporting resources."
+  default     = true
+}
+
 variable "gluekube_docker_image" {
   type        = string
   description = "Docker image for GlueKube."

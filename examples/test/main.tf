@@ -56,7 +56,7 @@ module "captain" {
   bastion = {
     instance_type = var.bastion_instance_type
     image         = var.bastion_ami
-    create        = true
+    create        = var.bastion_create
   }
 
   # --- node pools ---
