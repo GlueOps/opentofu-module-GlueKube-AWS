@@ -86,3 +86,9 @@ variable "cluster_name" {
 variable "attached" {
   type = bool
 }
+
+variable "network_dependency_ids" {
+  type        = list(string)
+  description = "Network resource IDs (routes, route table associations) that must exist before instances are created"
+  default     = []
+}

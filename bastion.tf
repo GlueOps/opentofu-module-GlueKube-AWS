@@ -67,6 +67,11 @@ resource "aws_instance" "bastion" {
     Name = "${var.autoglue.autoglue_cluster_name}-bastion"
     Role = "bastion"
   }
+
+  depends_on = [
+    module.vpc.public_route_table_association_ids,
+    module.vpc.public_internet_gateway_route_id,
+  ]
 }
 
 resource "autoglue_server" "bastion" {

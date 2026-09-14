@@ -90,7 +90,7 @@ jobs:
         env:
           TAG: ${{ inputs.gluekube_docker_tag }}
         run: echo "TF_VAR_gluekube_docker_tag=${TAG}" >> "$GITHUB_ENV"
-      
+
       # Pre-flight clean slate. Deliberately neither always() nor continue-on-error:
       # if we cannot prove the account and the org are empty before applying, the
       # health check downstream can pass against leftovers from a previous run
@@ -136,6 +136,9 @@ jobs:
           TF_VAR_route53_zone_id: ${{ secrets.ROUTE53_ZONE_ID }}
           TF_VAR_autoglue_credential_id: ${{ secrets.AUTOGLUE_CREDENTIAL_ID }}
         run: tofu apply -auto-approve
+
+      - name: Wait for nodes to finish booting and cloud-init
+        run: sleep 180
 
       - name: Invoke AutoGlue kubernetes setup
         uses: GlueOps/github-actions-gluekube-e2e/invoke-autoglue@2fa9cd245e87b55a5ea5d863e8427f4a7e06abf3 # v1.0.1
@@ -287,4 +290,3 @@ jobs:
           echo "ERROR: 'tofu destroy' succeeded but a nuke did not (aws: ${NUKE_AWS}, autoglue: ${NUKE_AUTOGLUE})." >&2
           echo "Resources the nuke could not delete may still exist. Check the failing nuke's log." >&2
           exit 1
-
