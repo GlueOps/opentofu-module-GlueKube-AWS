@@ -90,5 +90,5 @@ variable "attached" {
 variable "network_dependency_ids" {
   type        = list(string)
   description = "Network resource IDs (routes, route table associations) that must exist before instances are created"
-  default     = []
+  nullable    = false
 }
