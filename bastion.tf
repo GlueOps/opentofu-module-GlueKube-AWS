@@ -51,7 +51,7 @@ resource "aws_instance" "bastion" {
   ami                    = data.aws_ami.ubuntu.id
   instance_type          = var.bastion.instance_type
   subnet_id              = module.vpc.public_subnets[0]
-  vpc_security_group_ids = var.bastion.create ? [aws_security_group.bastion[0].id] : []
+  vpc_security_group_ids = [aws_security_group.bastion[0].id]
 
   user_data_base64 = base64encode(templatefile("${path.module}/cloudinit/cloud-init-bastion.yaml", {
     public_key = autoglue_ssh_key.bastion[0].public_key
@@ -77,8 +77,8 @@ resource "aws_instance" "bastion" {
 resource "autoglue_server" "bastion" {
   count              = var.bastion.create ? 1 : 0
   hostname           = "bastion"
-  public_ip_address  = var.bastion.create ? aws_instance.bastion[0].public_ip : null
-  private_ip_address = var.bastion.create ? aws_instance.bastion[0].private_ip : null
+  public_ip_address  = aws_instance.bastion[0].public_ip
+  private_ip_address = aws_instance.bastion[0].private_ip
   role               = "bastion"
   ssh_key_id         = autoglue_ssh_key.bastion[0].id
   ssh_user           = "cluster"
@@ -86,6 +86,6 @@ resource "autoglue_server" "bastion" {
 
 resource "autoglue_cluster_bastion" "bastion" {
   count      = var.bastion.create ? 1 : 0
-  cluster_id = var.bastion.create ? autoglue_cluster.cluster.id : null
-  server_id  = var.bastion.create ? autoglue_server.bastion[0].id : null
+  cluster_id = autoglue_cluster.cluster.id
+  server_id  = autoglue_server.bastion[0].id
 }

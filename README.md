@@ -225,6 +225,7 @@ module "captain" {
   bastion = {
     instance_type = "t3.large"
     image         = "" # empty selects the latest Ubuntu 24.04 AMI
+    create        = true # set false to skip the bastion host entirely
   }
 
   autoglue = {
