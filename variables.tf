@@ -24,7 +24,7 @@ variable "gluekube_docker_image" {
 variable "gluekube_docker_tag" {
   type        = string
   description = "Docker tag for GlueKube"
-  default     = "v1.34.5-gluekube.32"
+  default     = "v1.34.11-gluekube.2"
 }
 
 variable "vpc_cidr_block" {
