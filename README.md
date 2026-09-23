@@ -207,7 +207,7 @@ This opentofu module deploys a Kubernetes cluster on AWS using GlueKube.
 module "captain" {
   source                = "git::https://github.com/GlueOps/opentofu-module-GlueKube-AWS.git?ref=v0.4.1" # x-release-please-version
   gluekube_docker_image = "ghcr.io/glueops/gluekube"
-  gluekube_docker_tag   = "v1.34.5-gluekube.27"
+  gluekube_docker_tag   = "v1.34.11-gluekube.4"
 
   provider_credentials = var.provider_credentials
 
