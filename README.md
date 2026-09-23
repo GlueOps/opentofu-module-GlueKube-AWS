@@ -38,7 +38,7 @@ The module follows the same pattern as the HetznerCloud module:
 module "captain" {
   source                = "git::https://github.com/GlueOps/opentofu-module-GlueKube-AWS.git?ref=v0.4.1" # x-release-please-version
   gluekube_docker_image = "ghcr.io/glueops/gluekube"
-  gluekube_docker_tag   = "v1.34.11-gluekube.2"
+  gluekube_docker_tag   = "v1.34.11-gluekube.4"
   vpc_cidr_block        = "10.16.0.0/16"
   azs                   = ["us-west-2a", "us-west-2b", "us-west-2c"]
   region                = var.provider_credentials.region
@@ -402,7 +402,7 @@ module "captain" {
 | <a name="input_enable_nat_gateway"></a> [enable\_nat\_gateway](#input\_enable\_nat\_gateway) | Whether to enable NAT Gateway | `bool` | `true` | no |
 | <a name="input_enable_vpc_endpoints"></a> [enable\_vpc\_endpoints](#input\_enable\_vpc\_endpoints) | Whether to create the VPC endpoints (e.g. the S3 gateway endpoint). | `bool` | `true` | no |
 | <a name="input_gluekube_docker_image"></a> [gluekube\_docker\_image](#input\_gluekube\_docker\_image) | Docker image for GlueKube | `string` | `"ghcr.io/glueops/gluekube"` | no |
-| <a name="input_gluekube_docker_tag"></a> [gluekube\_docker\_tag](#input\_gluekube\_docker\_tag) | Docker tag for GlueKube | `string` | `"v1.34.11-gluekube.2"` | no |
+| <a name="input_gluekube_docker_tag"></a> [gluekube\_docker\_tag](#input\_gluekube\_docker\_tag) | Docker tag for GlueKube | `string` | `"v1.34.11-gluekube.4"` | no |
 | <a name="input_node_pools"></a> [node\_pools](#input\_node\_pools) | List of node pools to create | <pre>list(object({<br/>    name                   = string<br/>    image                  = string<br/>    node_count             = number<br/>    instance_type          = string<br/>    storage_size_gb        = optional(number, 30)<br/>    role                   = string<br/>    subnet                 = optional(string, "private")<br/>    kubernetes_labels      = optional(map(string), {})<br/>    kubernetes_annotations = optional(map(string), {})<br/>    kubernetes_taints = list(object({<br/>      key    = string<br/>      value  = string<br/>      effect = string<br/>    }))<br/>    attached = optional(bool, true)<br/>  }))</pre> | n/a | yes |
 | <a name="input_peering_configs"></a> [peering\_configs](#input\_peering\_configs) | A list of maps containing VPC peering configuration details | <pre>list(object({<br/>    vpc_peering_connection_id = string<br/>    destination_cidr_block    = string<br/>    include_intra_routes      = optional(bool, false)<br/>  }))</pre> | `[]` | no |
 | <a name="input_provider_credentials"></a> [provider\_credentials](#input\_provider\_credentials) | AWS provider credentials configuration | <pre>object({<br/>    name          = string<br/>    access_key    = string<br/>    secret_key    = string<br/>    region        = string<br/>    session_token = optional(string)<br/>  })</pre> | n/a | yes |
