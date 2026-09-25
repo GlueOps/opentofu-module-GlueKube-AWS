@@ -100,7 +100,7 @@ variable "gluekube_docker_image" {
 variable "gluekube_docker_tag" {
   type        = string
   description = "Docker tag for GlueKube (set per-run from the workflow input)."
-  default     = "v1.34.11-gluekube.4"
+  default     = "v1.34.11-gluekube.6"
 }
 
 variable "enable_vpc_endpoints" {
