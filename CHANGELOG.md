@@ -1,5 +1,26 @@
 # Changelog
 
+## [0.5.0](https://github.com/GlueOps/opentofu-module-GlueKube-AWS/compare/v0.4.1...v0.5.0) (2026-09-25)
+
+
+### Features
+
+* add toggle for the bastion ([#57](https://github.com/GlueOps/opentofu-module-GlueKube-AWS/issues/57)) ([07cf616](https://github.com/GlueOps/opentofu-module-GlueKube-AWS/commit/07cf616c6488876c44db899e3a6693cd2283e9a1))
+
+
+### Bug Fixes
+
+* bump github-actions-gluekube-e2e to v1.1.1 to retry failed bastions ([#59](https://github.com/GlueOps/opentofu-module-GlueKube-AWS/issues/59)) ([e5a439e](https://github.com/GlueOps/opentofu-module-GlueKube-AWS/commit/e5a439e4cb07531e3b7fb2671cd039c3f37eb87e))
+* change the default gluekube tag ([#62](https://github.com/GlueOps/opentofu-module-GlueKube-AWS/issues/62)) ([680a9b1](https://github.com/GlueOps/opentofu-module-GlueKube-AWS/commit/680a9b1f1787cc48cbcac49dd86b3a4959fbd84c))
+* giving aws cloud-init more time (2 extra minutes) in e2e tests ([#61](https://github.com/GlueOps/opentofu-module-GlueKube-AWS/issues/61)) ([a93e2fb](https://github.com/GlueOps/opentofu-module-GlueKube-AWS/commit/a93e2fb1b0efe61b5235508a2796f91f1cc522bc))
+* wait for NAT routes and route table associations before creating EC2 instances ([#55](https://github.com/GlueOps/opentofu-module-GlueKube-AWS/issues/55)) ([ee71cb1](https://github.com/GlueOps/opentofu-module-GlueKube-AWS/commit/ee71cb10066d02bd5d2a456c9ac7af4d5bdb4bf2))
+
+
+### Miscellaneous Chores
+
+* bumped the default gluekube tag version ([#58](https://github.com/GlueOps/opentofu-module-GlueKube-AWS/issues/58)) ([3047e19](https://github.com/GlueOps/opentofu-module-GlueKube-AWS/commit/3047e19dcc6c874b0e513d19df3a604fca5bc4e9))
+* update to latest tags for gluekube ([#63](https://github.com/GlueOps/opentofu-module-GlueKube-AWS/issues/63)) ([c5b6d07](https://github.com/GlueOps/opentofu-module-GlueKube-AWS/commit/c5b6d07d6e314072b5f5d5eed2b472b5a7f63860))
+
 ## [0.4.1](https://github.com/GlueOps/opentofu-module-GlueKube-AWS/compare/v0.4.0...v0.4.1) (2026-08-28)
 
 
