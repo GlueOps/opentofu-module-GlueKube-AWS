@@ -62,11 +62,6 @@ variable "ami_id" {
   description = "AMI ID to pin for the bastion and every node pool that does not set its own image. Empty (default) uses the latest Canonical Ubuntu Server 24.04 amd64 AMI in the region. Changing it never replaces existing instances; only new instances use it."
   default     = ""
   nullable    = false
-
-  validation {
-    condition     = can(regex("^(ami-[0-9a-f]{8,17})?$", var.ami_id))
-    error_message = "ami_id must be empty or an AMI ID like ami-0123456789abcdef0."
-  }
 }
 
 variable "bastion" {
@@ -76,18 +71,6 @@ variable "bastion" {
     image         = optional(string, "")
     create        = optional(bool, true)
   })
-
-  validation {
-    condition     = can(regex("^(ami-[0-9a-f]{8,17})?$", var.bastion.image))
-    error_message = "bastion.image must be empty or an AMI ID like ami-0123456789abcdef0."
-  }
-
-  # The module only resolves amd64 AMIs; Graviton (arm64) families are e.g. t4g, c7g, m7gd, r8g, a1.
-  # An arm64 type is fine when bastion.image pins an arm64 AMI.
-  validation {
-    condition     = var.bastion.image != "" || !can(regex("^([a-z]+[0-9]+[a-z]*g[a-z]*|a1)\\.", var.bastion.instance_type))
-    error_message = "bastion.instance_type is a Graviton/arm64 type (e.g. t4g, c7g, m7gd) but the module only provides amd64 AMIs; use an x86_64 type or pin an arm64 AMI in bastion.image."
-  }
 }
 
 variable "autoglue" {
@@ -142,18 +125,6 @@ variable "node_pools" {
   validation {
     condition     = alltrue([for np in var.node_pools : contains(["public", "private", "intra"], np.subnet)])
     error_message = "subnet must be one of: public, private, or intra."
-  }
-
-  validation {
-    condition     = alltrue([for np in var.node_pools : can(regex("^(ami-[0-9a-f]{8,17})?$", np.image))])
-    error_message = "node_pools[].image must be empty or an AMI ID like ami-0123456789abcdef0."
-  }
-
-  # The module only resolves amd64 AMIs; Graviton (arm64) families are e.g. t4g, c7g, m7gd, r8g, a1.
-  # An arm64 type is fine when the pool's image pins an arm64 AMI.
-  validation {
-    condition     = alltrue([for np in var.node_pools : np.image != "" || !can(regex("^([a-z]+[0-9]+[a-z]*g[a-z]*|a1)\\.", np.instance_type))])
-    error_message = "A node pool uses a Graviton/arm64 instance type (e.g. t4g, c7g, m7gd) without its own image, but the module only provides amd64 AMIs; use an x86_64 type or pin an arm64 AMI in that pool's image."
   }
 }
 variable "peering_configs" {

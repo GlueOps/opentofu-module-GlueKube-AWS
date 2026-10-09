@@ -32,7 +32,7 @@ The module follows the same pattern as the HetznerCloud module:
   - `variables.tf` - Module variables
   - `output.tf` - Module outputs
   - `cloudinit/` - Cloud-init configuration files
-- `tests/` - `tofu test` suite for AMI selection and input validation (all providers mocked, no credentials needed: `tofu init && tofu test`)
+- `tests/` - `tofu test` suite for AMI selection (all providers mocked, no credentials needed: `tofu init && tofu test`)
 
 ## Usage
 
@@ -178,8 +178,8 @@ module "captain" {
 The bastion and every node pool share one AMI definition (`ami.tf`): the latest
 Canonical **Ubuntu Server** 24.04 (Noble) amd64 image in the provider's region
 (owner `099720109477`, name `ubuntu/images/hvm-ssd-gp3/ubuntu-noble-24.04-amd64-server-*`).
-Ubuntu Pro images are excluded by the name filter, a `platform-details = Linux/UNIX`
-filter and a postcondition on the billing code. No AMI ids are hard-coded, so it works in any region.
+Ubuntu Pro images are excluded by the name filter and a `platform-details = Linux/UNIX`
+filter. No AMI ids are hard-coded, so it works in any region.
 
 | Priority | Bastion | Node pool |
 |----------|---------|-----------|
@@ -193,7 +193,6 @@ Only instances created afterwards (new pools, a larger `node_count`, or a replac
 instance) use the new AMI. To roll existing nodes onto a new AMI, replace them
 deliberately (e.g. `tofu apply -replace=...`) one at a time.
 
-- `ami_id`, `bastion.image` and `node_pools[].image` must be empty or an AMI ID (`ami-...`).
 - Pinned AMIs are not filtered like the latest lookup. A `check` warns (without blocking
   the plan) when a pinned AMI is Ubuntu Pro or otherwise not Ubuntu Server.
 - `bastion.image` is honoured (it was previously ignored), so a stale or Pro pin would be
@@ -201,9 +200,8 @@ deliberately (e.g. `tofu apply -replace=...`) one at a time.
 - If you copied the old example pin `ami-04a649374b43dc2a7`, those instances run **Ubuntu Pro**
   today. Removing the pin is safe: existing instances ignore AMI changes, and only new
   instances get the latest Ubuntu Server.
-- **amd64 only**: the module resolves x86_64 AMIs, so Graviton/arm64 instance types
-  (e.g. `t4g`, `c7g`, `m7gd`, `r8g`, `a1`) are rejected for the bastion and node pools
-  unless that bastion or pool pins its own arm64 AMI via `image`.
+- The default AMI is amd64 (x86_64). To use Graviton/arm64 instance types, pin an arm64
+  AMI via that bastion's or pool's `image`.
 
 ## Requirements
 
