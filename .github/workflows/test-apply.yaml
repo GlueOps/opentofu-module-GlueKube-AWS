@@ -18,8 +18,7 @@ name: test-apply
 #   DOMAIN_NAME                    ROUTE53_ZONE_ID                AUTOGLUE_CREDENTIAL_ID
 # Additional secrets for the AutoGlue action invocation (invoke-autoglue):
 #   AUTOGLUE_API_KEY  (X-API-KEY header)            AUTOGLUE_ORG_NAME  (resolved to org id)
-# No AMI is passed: node_ami / bastion_ami default to "" so the run exercises the
-# module's latest Ubuntu Server 24.04 lookup.
+# No AMI is pinned: the run uses the module's latest Ubuntu Server 24.04 lookup.
 # Non-secret defaults (aws_region, azs, instance types, CIDRs, cloud) come from
 # examples/test/variables.tf; override there if needed.
 #

@@ -55,7 +55,6 @@ module "captain" {
   # --- bastion ---
   bastion = {
     instance_type = var.bastion_instance_type
-    image         = var.bastion_ami
     create        = var.bastion_create
   }
 
@@ -68,7 +67,6 @@ module "captain" {
       name              = "master-node-pool"
       role              = "master"
       instance_type     = var.node_instance_type
-      image             = var.node_ami
       node_count        = var.node_count
       subnet            = "private"
       attached          = true
@@ -79,7 +77,6 @@ module "captain" {
       "instance_type" : var.node_instance_type,
       "role" : "worker",
       "name" : "glueops-platform-node-pool",
-      "image" : var.node_ami,
       "subnet" : "private",
       "node_count" : 3,
 
@@ -98,7 +95,6 @@ module "captain" {
       "instance_type" : var.node_instance_type,
       "role" : "worker",
       "name" : "clusterwide-node-pool",
-      "image" : var.node_ami,
       "subnet" : "private",
       "node_count" : 2,
 

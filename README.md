@@ -43,6 +43,7 @@ module "captain" {
   vpc_cidr_block        = "10.16.0.0/16"
   azs                   = ["us-west-2a", "us-west-2b", "us-west-2c"]
   region                = var.provider_credentials.region
+  # ami_id              = "ami-..." # optional: pin one AMI for the bastion and all node pools (default: latest Ubuntu Server 24.04)
   enable_nat_gateway    = true # this should create a nat on each az defined above
 
   cluster_metadata = {
@@ -71,7 +72,6 @@ module "captain" {
   }
   bastion = {
     instance_type = "t3a.medium"
-    image         = "" # optional AMI pin; empty uses ami_id or the latest Ubuntu Server 24.04 AMI
     create        = true
   }
 
@@ -237,6 +237,7 @@ module "captain" {
   vpc_cidr_block     = "10.0.0.0/16"
   azs                = ["us-west-2a", "us-west-2b", "us-west-2c"]
   region             = var.provider_credentials.region
+  # ami_id           = "ami-..." # optional: pin one AMI for the bastion and all node pools (default: latest Ubuntu Server 24.04)
   enable_nat_gateway = true
 
   cluster_metadata = {
@@ -247,7 +248,6 @@ module "captain" {
 
   bastion = {
     instance_type = "t3.large"
-    image         = "" # optional AMI pin; empty uses ami_id or the latest Ubuntu Server 24.04 AMI
     create        = true # set false to skip the bastion host entirely
   }
 
