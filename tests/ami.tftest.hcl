@@ -2,8 +2,7 @@
 # cloud credentials:  tofu init && tofu test
 #
 # The AMI lookups are overridden with fixed images, so these tests cover the
-# module's logic (AMI precedence and the pinned-AMI check), not Canonical's
-# live catalogue.
+# module's AMI precedence logic, not Canonical's live catalogue.
 
 mock_provider "aws" {
   mock_data "aws_ami" {
@@ -13,13 +12,6 @@ mock_provider "aws" {
       owner_id         = "099720109477"
       platform_details = "Linux/UNIX"
       usage_operation  = "RunInstances"
-    }
-  }
-
-  # By default every pinned AMI is visible and is Ubuntu Server.
-  mock_data "aws_ami_ids" {
-    defaults = {
-      ids = ["ami-0bbbbbbbbbbbbbbbb", "ami-0cccccccccccccccc"]
     }
   }
 }
@@ -96,52 +88,4 @@ run "bastion_image_beats_ami_id" {
     condition     = aws_instance.bastion[0].ami == "ami-0cccccccccccccccc"
     error_message = "bastion.image should take precedence over ami_id."
   }
-}
-
-run "pins_are_collected" {
-  command = plan
-
-  variables {
-    ami_id     = "ami-0bbbbbbbbbbbbbbbb"
-    bastion    = { instance_type = "t3a.medium", image = "ami-0cccccccccccccccc" }
-    node_pools = [{ name = "m", role = "master", node_count = 1, instance_type = "c6a.large", kubernetes_taints = [], image = "ami-0bbbbbbbbbbbbbbbb" }]
-  }
-
-  assert {
-    condition     = local.pinned_ami_ids == toset(["ami-0bbbbbbbbbbbbbbbb", "ami-0cccccccccccccccc"])
-    error_message = "Pinned AMIs should be the distinct non-empty ami_id / bastion.image / pool images."
-  }
-}
-
-run "bastion_pin_ignored_without_bastion" {
-  command = plan
-
-  variables {
-    bastion = { instance_type = "t3a.medium", image = "ami-0cccccccccccccccc", create = false }
-  }
-
-  assert {
-    condition     = length(local.pinned_ami_ids) == 0 && length(data.aws_ami_ids.pinned) == 0
-    error_message = "bastion.image should not be checked when no bastion is created."
-  }
-}
-
-run "pro_pin_warns" {
-  command = plan
-
-  variables {
-    bastion = { instance_type = "t3a.medium", image = "ami-0dddddddddddddddd" }
-  }
-
-  override_data {
-    target = data.aws_ami_ids.pinned
-    values = { ids = ["ami-0dddddddddddddddd"] }
-  }
-
-  override_data {
-    target = data.aws_ami_ids.pinned_ubuntu_server
-    values = { ids = [] }
-  }
-
-  expect_failures = [check.pinned_ami_is_ubuntu_server]
 }

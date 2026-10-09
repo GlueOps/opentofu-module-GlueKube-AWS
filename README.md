@@ -193,8 +193,6 @@ Only instances created afterwards (new pools, a larger `node_count`, or a replac
 instance) use the new AMI. To roll existing nodes onto a new AMI, replace them
 deliberately (e.g. `tofu apply -replace=...`) one at a time.
 
-- Pinned AMIs are not filtered like the latest lookup. A `check` warns (without blocking
-  the plan) when a pinned AMI is Ubuntu Pro or otherwise not Ubuntu Server.
 - `bastion.image` is honoured (it was previously ignored), so a stale or Pro pin would be
   used the next time the bastion is created. Leave it empty unless you need a specific AMI.
 - If you copied the old example pin `ami-04a649374b43dc2a7`, those instances run **Ubuntu Pro**
@@ -205,9 +203,11 @@ deliberately (e.g. `tofu apply -replace=...`) one at a time.
 
 ## Requirements
 
-- OpenTofu >= 1.6 (running the `tests/` suite needs >= 1.7)
+- OpenTofu or Terraform >= 1.0
 - AWS account with appropriate permissions
 - AutoGlue account and credentials
+
+Running the `tests/` suite (`tofu test` with mocked providers) needs OpenTofu >= 1.7.
 
 ## Features
 
@@ -373,7 +373,6 @@ module "captain" {
 
 | Name | Version |
 |------|---------|
-| <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.6 |
 | <a name="requirement_autoglue"></a> [autoglue](#requirement\_autoglue) | 0.10.12 |
 | <a name="requirement_aws"></a> [aws](#requirement\_aws) | >= 6.53, < 7.0 |
 
@@ -410,8 +409,6 @@ module "captain" {
 | [aws_instance.bastion](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/instance) | resource |
 | [aws_security_group.bastion](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group) | resource |
 | [aws_ami.ubuntu](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/ami) | data source |
-| [aws_ami_ids.pinned](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/ami_ids) | data source |
-| [aws_ami_ids.pinned_ubuntu_server](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/ami_ids) | data source |
 | [aws_availability_zones.available](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/availability_zones) | data source |
 
 ## Inputs
