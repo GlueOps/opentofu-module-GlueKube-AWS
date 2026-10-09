@@ -198,12 +198,16 @@ deliberately (e.g. `tofu apply -replace=...`) one at a time.
   the plan) when a pinned AMI is Ubuntu Pro or otherwise not Ubuntu Server.
 - `bastion.image` is honoured (it was previously ignored), so a stale or Pro pin would be
   used the next time the bastion is created. Leave it empty unless you need a specific AMI.
+- If you copied the old example pin `ami-04a649374b43dc2a7`, those instances run **Ubuntu Pro**
+  today. Removing the pin is safe: existing instances ignore AMI changes, and only new
+  instances get the latest Ubuntu Server.
 - **amd64 only**: the module resolves x86_64 AMIs, so Graviton/arm64 instance types
-  (e.g. `t4g`, `c7g`, `m7gd`, `r8g`, `a1`) are rejected for the bastion and node pools.
+  (e.g. `t4g`, `c7g`, `m7gd`, `r8g`, `a1`) are rejected for the bastion and node pools
+  unless that bastion or pool pins its own arm64 AMI via `image`.
 
 ## Requirements
 
-- OpenTofu or Terraform >= 1.0
+- OpenTofu >= 1.6 (running the `tests/` suite needs >= 1.7)
 - AWS account with appropriate permissions
 - AutoGlue account and credentials
 
@@ -371,6 +375,7 @@ module "captain" {
 
 | Name | Version |
 |------|---------|
+| <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.6 |
 | <a name="requirement_autoglue"></a> [autoglue](#requirement\_autoglue) | 0.10.12 |
 | <a name="requirement_aws"></a> [aws](#requirement\_aws) | >= 6.53, < 7.0 |
 

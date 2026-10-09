@@ -219,3 +219,116 @@ run "gpu_pool_allowed" {
     node_pools = [{ name = "m", role = "master", node_count = 1, instance_type = "g4dn.xlarge", kubernetes_taints = [] }]
   }
 }
+
+# Node precedence: pool image > ami_id > latest.
+run "node_uses_latest" {
+  command = plan
+
+  assert {
+    condition     = module.node_pool["m"].instance_amis["0"] == "ami-0aaaaaaaaaaaaaaaa"
+    error_message = "A pool without image should use the latest lookup."
+  }
+}
+
+run "node_uses_ami_id" {
+  command = plan
+
+  variables {
+    ami_id = "ami-0bbbbbbbbbbbbbbbb"
+  }
+
+  assert {
+    condition     = module.node_pool["m"].instance_amis["0"] == "ami-0bbbbbbbbbbbbbbbb"
+    error_message = "A pool without image should use ami_id."
+  }
+}
+
+run "node_image_beats_ami_id" {
+  command = plan
+
+  variables {
+    ami_id     = "ami-0bbbbbbbbbbbbbbbb"
+    node_pools = [{ name = "m", role = "master", node_count = 1, instance_type = "c6a.large", kubernetes_taints = [], image = "ami-0cccccccccccccccc" }]
+  }
+
+  assert {
+    condition     = module.node_pool["m"].instance_amis["0"] == "ami-0cccccccccccccccc"
+    error_message = "A pool's image should take precedence over ami_id."
+  }
+}
+
+run "lookup_skipped_when_everything_pinned" {
+  command = plan
+
+  variables {
+    bastion    = { instance_type = "t3a.medium", image = "ami-0cccccccccccccccc" }
+    node_pools = [{ name = "m", role = "master", node_count = 1, instance_type = "c6a.large", kubernetes_taints = [], image = "ami-0bbbbbbbbbbbbbbbb" }]
+  }
+
+  assert {
+    condition     = length(data.aws_ami.ubuntu) == 0 && local.ami_id == null
+    error_message = "The latest lookup should be skipped when no instance uses the default."
+  }
+
+  assert {
+    condition     = aws_instance.bastion[0].ami == "ami-0cccccccccccccccc" && module.node_pool["m"].instance_amis["0"] == "ami-0bbbbbbbbbbbbbbbb"
+    error_message = "Pinned instances should keep their own AMIs."
+  }
+}
+
+run "missing_pin_warns" {
+  command = plan
+
+  variables {
+    bastion = { instance_type = "t3a.medium", image = "ami-0ffffffffffffffff" }
+  }
+
+  override_data {
+    target = data.aws_ami_ids.pinned
+    values = { ids = [] }
+  }
+
+  override_data {
+    target = data.aws_ami_ids.pinned_ubuntu_server
+    values = { ids = [] }
+  }
+
+  expect_failures = [check.pinned_ami_is_ubuntu_server]
+}
+
+# arm64 types work when the caller pins its own (arm64) AMI.
+run "graviton_pool_with_pinned_image_allowed" {
+  command = plan
+
+  variables {
+    node_pools = [{ name = "m", role = "master", node_count = 1, instance_type = "c7g.large", kubernetes_taints = [], image = "ami-0bbbbbbbbbbbbbbbb" }]
+  }
+
+  assert {
+    condition     = module.node_pool["m"].instance_amis["0"] == "ami-0bbbbbbbbbbbbbbbb"
+    error_message = "A c7g pool with a pinned image should be allowed."
+  }
+}
+
+run "graviton_pool_without_image_rejected" {
+  command = plan
+
+  variables {
+    node_pools = [{ name = "m", role = "master", node_count = 1, instance_type = "c7g.large", kubernetes_taints = [] }]
+  }
+
+  expect_failures = [var.node_pools]
+}
+
+run "graviton_bastion_with_pinned_image_allowed" {
+  command = plan
+
+  variables {
+    bastion = { instance_type = "t4g.small", image = "ami-0cccccccccccccccc" }
+  }
+
+  assert {
+    condition     = aws_instance.bastion[0].ami == "ami-0cccccccccccccccc"
+    error_message = "A t4g bastion with a pinned image should be allowed."
+  }
+}

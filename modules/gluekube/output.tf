@@ -12,3 +12,7 @@ output "node_pool_id" {
 output "attached" {
   value = var.attached
 }
+
+output "instance_amis" {
+  value = { for k, instance in aws_instance.cluster_node : k => instance.ami }
+}
