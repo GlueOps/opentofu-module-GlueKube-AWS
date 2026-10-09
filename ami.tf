@@ -40,7 +40,7 @@ data "aws_ami" "ubuntu" {
   lifecycle {
     postcondition {
       condition     = self.platform_details == "Linux/UNIX" && self.usage_operation == "RunInstances"
-      error_message = "Resolved AMI ${self.id} (${self.name}) is not a plain Ubuntu Server image (Ubuntu Pro or other billed product)."
+      error_message = "Resolved AMI ${self.id} (${self.name}) is not a plain Ubuntu Server image (Ubuntu Pro or other billed product). Set ami_id to pin an Ubuntu Server AMI instead."
     }
   }
 }
@@ -48,4 +48,54 @@ data "aws_ami" "ubuntu" {
 locals {
   # Module-wide default AMI: var.ami_id when pinned, otherwise the latest Canonical image.
   ami_id = coalesce(var.ami_id, one(data.aws_ami.ubuntu[*].id))
+
+  # Every AMI pinned by the caller (ami_id, bastion.image, node_pools[].image).
+  pinned_ami_ids = toset(compact(concat(
+    [var.ami_id, var.bastion.create ? var.bastion.image : ""],
+    [for np in var.node_pools : np.image],
+  )))
+}
+
+# Pinned AMIs are not filtered like the latest lookup above, so warn (without
+# blocking the plan) when a pin is Ubuntu Pro or another non-Ubuntu-Server product.
+# Check blocks don't support count/for_each on scoped data sources, so the lookups
+# live at the top level. Only images visible under these owners are checked;
+# Canonical's images (Server and Pro) are listed under the "amazon" alias.
+data "aws_ami_ids" "pinned" {
+  count              = length(local.pinned_ami_ids) > 0 ? 1 : 0
+  owners             = ["self", "amazon", "aws-marketplace"]
+  include_deprecated = true
+
+  filter {
+    name   = "image-id"
+    values = local.pinned_ami_ids
+  }
+}
+
+data "aws_ami_ids" "pinned_ubuntu_server" {
+  count              = length(local.pinned_ami_ids) > 0 ? 1 : 0
+  owners             = ["self", "amazon", "aws-marketplace"]
+  include_deprecated = true
+
+  filter {
+    name   = "image-id"
+    values = local.pinned_ami_ids
+  }
+
+  filter {
+    name   = "platform-details"
+    values = ["Linux/UNIX"]
+  }
+
+  filter {
+    name   = "usage-operation"
+    values = ["RunInstances"]
+  }
+}
+
+check "pinned_ami_is_ubuntu_server" {
+  assert {
+    condition     = length(setsubtract(flatten(data.aws_ami_ids.pinned[*].ids), flatten(data.aws_ami_ids.pinned_ubuntu_server[*].ids))) == 0
+    error_message = "Pinned AMI(s) ${join(", ", sort(setsubtract(flatten(data.aws_ami_ids.pinned[*].ids), flatten(data.aws_ami_ids.pinned_ubuntu_server[*].ids))))} are Ubuntu Pro or otherwise not Ubuntu Server. Existing instances are not changed, but new instances would use them; unset ami_id / bastion.image / node_pools[].image to use the latest Ubuntu Server."
+  }
 }

@@ -192,6 +192,14 @@ Only instances created afterwards (new pools, a larger `node_count`, or a replac
 instance) use the new AMI. To roll existing nodes onto a new AMI, replace them
 deliberately (e.g. `tofu apply -replace=...`) one at a time.
 
+- `ami_id`, `bastion.image` and `node_pools[].image` must be empty or an AMI ID (`ami-...`).
+- Pinned AMIs are not filtered like the latest lookup. A `check` warns (without blocking
+  the plan) when a pinned AMI is Ubuntu Pro or otherwise not Ubuntu Server.
+- `bastion.image` is honoured (it was previously ignored), so a stale or Pro pin would be
+  used the next time the bastion is created. Leave it empty unless you need a specific AMI.
+- **amd64 only**: the module resolves x86_64 AMIs, so Graviton/arm64 instance types
+  (e.g. `t4g`, `c7g`, `m7gd`, `r8g`, `a1`) are rejected for the bastion and node pools.
+
 ## Requirements
 
 - OpenTofu or Terraform >= 1.0
@@ -398,6 +406,8 @@ module "captain" {
 | [aws_instance.bastion](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/instance) | resource |
 | [aws_security_group.bastion](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group) | resource |
 | [aws_ami.ubuntu](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/ami) | data source |
+| [aws_ami_ids.pinned](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/ami_ids) | data source |
+| [aws_ami_ids.pinned_ubuntu_server](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/ami_ids) | data source |
 | [aws_availability_zones.available](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/availability_zones) | data source |
 
 ## Inputs
