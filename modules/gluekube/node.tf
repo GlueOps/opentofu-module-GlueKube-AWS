@@ -1,19 +1,3 @@
-data "aws_ami" "ubuntu" {
-  most_recent = true
-
-  filter {
-    name   = "name"
-    values = ["ubuntu/images/hvm-ssd-gp3/ubuntu-noble-24.04-amd64-server-*"]
-  }
-
-  filter {
-    name   = "virtualization-type"
-    values = ["hvm"]
-  }
-
-  owners = ["099720109477"] # Canonical
-}
-
 resource "aws_security_group" "node_sg" {
   name        = "${var.cluster_name}-${var.name}-sg"
   description = "Security group for ${var.role} nodes"
@@ -87,7 +71,7 @@ resource "aws_security_group" "node_sg" {
 
 resource "aws_instance" "cluster_node" {
   for_each               = toset([for i in range(0, var.node_count) : tostring(i)])
-  ami                    = var.image != "" ? var.image : data.aws_ami.ubuntu.id
+  ami                    = coalesce(var.image, var.default_image)
   instance_type          = var.instance_type
   subnet_id              = var.subnet_ids[tonumber(each.key) % length(var.subnet_ids)]
   vpc_security_group_ids = [aws_security_group.node_sg.id]
@@ -97,8 +81,10 @@ resource "aws_instance" "cluster_node" {
     hostname   = "${var.role}-${var.name}-${each.key}"
   }))
 
+  # Existing nodes keep the AMI they were created with; only new nodes pick up a
+  # newer AMI or a changed pin.
   lifecycle {
-    ignore_changes = [user_data_base64]
+    ignore_changes = [ami, user_data_base64]
   }
 
   root_block_device {

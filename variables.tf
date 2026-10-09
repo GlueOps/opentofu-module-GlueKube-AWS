@@ -57,11 +57,18 @@ variable "enable_vpc_endpoints" {
   default     = true
 }
 
+variable "ami_id" {
+  type        = string
+  description = "AMI ID to pin for the bastion and every node pool that does not set its own image. Empty (default) uses the latest Canonical Ubuntu Server 24.04 amd64 AMI in the region. Changing it never replaces existing instances; only new instances use it."
+  default     = ""
+  nullable    = false
+}
+
 variable "bastion" {
-  description = "Bastion configuration."
+  description = "Bastion configuration. image pins the bastion's AMI; empty (default) uses ami_id or the latest Canonical Ubuntu Server 24.04 AMI. Changing it never replaces an existing bastion."
   type = object({
     instance_type = string
-    image         = string
+    image         = optional(string, "")
     create        = optional(bool, true)
   })
 }
@@ -91,7 +98,7 @@ variable "autoglue" {
 variable "node_pools" {
   type = list(object({
     name                   = string
-    image                  = string
+    image                  = optional(string, "")
     node_count             = number
     instance_type          = string
     storage_size_gb        = optional(number, 30)
@@ -107,7 +114,7 @@ variable "node_pools" {
     attached = optional(bool, true)
   }))
 
-  description = "List of node pools to create"
+  description = "List of node pools to create. image pins a pool's AMI; empty (default) uses ami_id or the latest Canonical Ubuntu Server 24.04 AMI. Changing it never replaces existing nodes; only new nodes use it."
 
   validation {
     condition     = length([for np in var.node_pools : np if np.role == "master" && np.attached]) > 0

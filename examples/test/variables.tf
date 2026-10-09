@@ -59,7 +59,8 @@ variable "azs" {
 
 variable "node_ami" {
   type        = string
-  description = "AMI id for node pool instances (Ubuntu 24.04 in the target region)."
+  description = "AMI id pinned for node pool instances. Empty uses the module's latest Ubuntu Server 24.04 AMI."
+  default     = ""
 }
 
 variable "node_instance_type" {
@@ -76,7 +77,8 @@ variable "node_count" {
 
 variable "bastion_ami" {
   type        = string
-  description = "AMI id for the bastion host (Ubuntu 24.04 in the target region)."
+  description = "AMI id pinned for the bastion host. Empty uses the module's latest Ubuntu Server 24.04 AMI."
+  default     = ""
 }
 
 variable "bastion_instance_type" {

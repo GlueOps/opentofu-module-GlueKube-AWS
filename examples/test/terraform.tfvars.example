@@ -15,10 +15,10 @@ aws_provider_name = "aws"
 # --- network / compute ---
 vpc_cidr_block        = "10.16.0.0/16"
 azs                   = ["us-west-2a", "us-west-2b", "us-west-2c"]
-node_ami              = "ami-04a649374b43dc2a7" # Ubuntu 24.04 in the target region
+node_ami              = ""                      # empty = latest Ubuntu Server 24.04 in the region
 node_instance_type    = "c6a.large"
 node_count            = 1
-bastion_ami           = "ami-04a649374b43dc2a7"
+bastion_ami           = ""                      # empty = latest Ubuntu Server 24.04 in the region
 bastion_instance_type = "t3a.medium"
 bastion_create        = true # set false to skip the bastion host
 enable_vpc_endpoints  = true # set false to skip the S3 gateway endpoint
