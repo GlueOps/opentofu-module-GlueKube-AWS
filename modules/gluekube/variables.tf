@@ -31,8 +31,14 @@ variable "storage_size_gb" {
 
 variable "image" {
   type        = string
-  description = "The AMI ID to use for the instances"
+  description = "AMI ID pinned for this pool. Empty uses default_image."
   default     = ""
+  nullable    = false
+}
+
+variable "default_image" {
+  type        = string
+  description = "AMI ID used when image is empty (the root module's single Ubuntu AMI)."
 }
 
 variable "region" {

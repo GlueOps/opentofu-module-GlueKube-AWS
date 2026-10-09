@@ -57,11 +57,6 @@ variable "azs" {
   default     = ["us-west-2a", "us-west-2b", "us-west-2c"]
 }
 
-variable "node_ami" {
-  type        = string
-  description = "AMI id for node pool instances (Ubuntu 24.04 in the target region)."
-}
-
 variable "node_instance_type" {
   type        = string
   description = "EC2 instance type for the master node pool."
@@ -72,11 +67,6 @@ variable "node_count" {
   type        = number
   description = "Number of nodes in the master pool (kept low for cheap testing)."
   default     = 1
-}
-
-variable "bastion_ami" {
-  type        = string
-  description = "AMI id for the bastion host (Ubuntu 24.04 in the target region)."
 }
 
 variable "bastion_instance_type" {

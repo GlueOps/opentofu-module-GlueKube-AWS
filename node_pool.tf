@@ -5,6 +5,7 @@ module "node_pool" {
   instance_type          = each.value.instance_type
   storage_size_gb        = each.value.storage_size_gb
   image                  = each.value.image
+  default_image          = local.ami_id
   role                   = each.value.role
   node_count             = each.value.node_count
   kubernetes_labels      = each.value.kubernetes_labels

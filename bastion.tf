@@ -1,19 +1,3 @@
-data "aws_ami" "ubuntu" {
-  most_recent = true
-
-  filter {
-    name   = "name"
-    values = ["ubuntu/images/hvm-ssd-gp3/ubuntu-noble-24.04-amd64-server-*"]
-  }
-
-  filter {
-    name   = "virtualization-type"
-    values = ["hvm"]
-  }
-
-  owners = ["099720109477"] # Canonical
-}
-
 resource "autoglue_ssh_key" "bastion" {
   count   = var.bastion.create ? 1 : 0
   name    = "${var.autoglue.autoglue_cluster_name}-bastion"
@@ -48,7 +32,7 @@ resource "aws_security_group" "bastion" {
 
 resource "aws_instance" "bastion" {
   count                  = var.bastion.create ? 1 : 0
-  ami                    = data.aws_ami.ubuntu.id
+  ami                    = coalesce(var.bastion.image, local.ami_id)
   instance_type          = var.bastion.instance_type
   subnet_id              = module.vpc.public_subnets[0]
   vpc_security_group_ids = [aws_security_group.bastion[0].id]
@@ -57,6 +41,11 @@ resource "aws_instance" "bastion" {
     public_key = autoglue_ssh_key.bastion[0].public_key
     hostname   = "bastion"
   }))
+
+  # Never replace the bastion because a newer AMI was published or the pin changed.
+  lifecycle {
+    ignore_changes = [ami]
+  }
 
   root_block_device {
     volume_size = 30

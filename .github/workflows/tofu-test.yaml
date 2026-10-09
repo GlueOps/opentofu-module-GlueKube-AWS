@@ -1,0 +1,38 @@
+name: tofu-test
+
+# Every provider in tests/ is mocked, so this needs no secrets.
+on:
+  - pull_request
+
+permissions:
+  contents: read
+
+jobs:
+  tofu-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+
+      - name: Setup OpenTofu
+        uses: opentofu/setup-opentofu@9d84900f3238fab8cd84ce47d658d25dd008be2f # v1.0.8
+        with:
+          # Pinned so an OpenTofu release cannot break PR checks; bump deliberately.
+          tofu_version: "1.12.5"
+          tofu_wrapper: false
+
+      - name: Format
+        run: tofu fmt -check -recursive
+
+      - name: Validate
+        run: |
+          for dir in . examples/test modules/gluekube; do
+            echo "::group::validate $dir"
+            tofu -chdir="$dir" init -backend=false -input=false
+            tofu -chdir="$dir" validate
+            echo "::endgroup::"
+          done
+
+      - name: Test
+        run: tofu test
