@@ -1,8 +1,5 @@
-# AMI selection tests. Plan-only, with every provider mocked, so they need no
-# cloud credentials:  tofu init && tofu test
-#
-# The AMI lookups are overridden with fixed images, so these tests cover the
-# module's AMI precedence logic, not Canonical's live catalogue.
+# Plan-only with every provider mocked (no credentials). The aws_ami lookup is mocked,
+# so this covers AMI precedence, not Canonical's live catalogue.
 
 mock_provider "aws" {
   mock_data "aws_ami" {

@@ -1,7 +1,6 @@
 name: tofu-test
 
-# Static checks plus the mocked `tofu test` suite (tests/). Every provider is
-# mocked and nothing is planned against a real account, so this needs no secrets.
+# Every provider in tests/ is mocked, so this needs no secrets.
 on:
   - pull_request
 

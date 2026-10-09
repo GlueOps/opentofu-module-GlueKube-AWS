@@ -81,8 +81,7 @@ resource "aws_instance" "cluster_node" {
     hostname   = "${var.role}-${var.name}-${each.key}"
   }))
 
-  # Existing nodes keep the AMI they were created with; only new nodes pick up a
-  # newer AMI or a changed pin.
+  # A newer AMI or changed pin must never replace existing nodes; only new nodes use it.
   lifecycle {
     ignore_changes = [ami, user_data_base64]
   }
