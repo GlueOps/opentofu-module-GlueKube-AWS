@@ -32,6 +32,7 @@ The module follows the same pattern as the HetznerCloud module:
   - `variables.tf` - Module variables
   - `output.tf` - Module outputs
   - `cloudinit/` - Cloud-init configuration files
+- `tests/` - `tofu test` suite for AMI selection and input validation (all providers mocked, no credentials needed: `tofu init && tofu test`)
 
 ## Usage
 
