@@ -19,7 +19,7 @@ jobs:
         uses: opentofu/setup-opentofu@9d84900f3238fab8cd84ce47d658d25dd008be2f # v1.0.8
         with:
           # Pinned so an OpenTofu release cannot break PR checks; bump deliberately.
-          tofu_version: "1.12.5"
+          tofu_version: "v1.12.6"
           tofu_wrapper: false
 
       - name: Format
