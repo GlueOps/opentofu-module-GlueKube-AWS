@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.5.1](https://github.com/GlueOps/opentofu-module-GlueKube-AWS/compare/v0.5.0...v0.5.1) (2026-11-02)
+
+
+### Miscellaneous Chores
+
+* drop config:recommended from renovate.json ([#68](https://github.com/GlueOps/opentofu-module-GlueKube-AWS/issues/68)) ([76a87c0](https://github.com/GlueOps/opentofu-module-GlueKube-AWS/commit/76a87c0253922115952a021f79a2eebd9ded7c1d))
+
 ## [0.5.0](https://github.com/GlueOps/opentofu-module-GlueKube-AWS/compare/v0.4.1...v0.5.0) (2026-10-16)
 
 
