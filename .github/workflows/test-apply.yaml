@@ -134,9 +134,6 @@ jobs:
           TF_VAR_autoglue_credential_id: ${{ secrets.AUTOGLUE_CREDENTIAL_ID }}
         run: tofu apply -auto-approve
 
-      - name: Wait for nodes to finish booting and cloud-init
-        run: sleep 300
-
       - name: Invoke AutoGlue kubernetes setup
         uses: GlueOps/github-actions-gluekube-e2e/invoke-autoglue@26c6e4123fb95626589f141e39e0c79928eaf596 # v1.1.1
         with:
