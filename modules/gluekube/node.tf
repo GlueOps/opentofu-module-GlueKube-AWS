@@ -78,8 +78,9 @@ module "cloud_init" {
   hostname   = "${var.role}-${var.name}-${each.key}"
   public_key = autoglue_ssh_key.ssh_key.public_key
 
-  extra_packages = ["qemu-guest-agent"]
-  extra_runcmd   = ["systemctl enable --now qemu-guest-agent"]
+  # No qemu-guest-agent here: EC2 has no virtio-serial guest-agent port, so starting it waits ~90s
+  # for a device that never appears and then fails -- and as the last runcmd that failure would
+  # put cloud-init in status: error, which GlueKube's wait-for-cloud-init.yaml stops the run on.
   extra_cloud_config = {
     mounts = [["swap", null]]
   }
