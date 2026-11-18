@@ -31,7 +31,6 @@ The module follows the same pattern as the HetznerCloud module:
   - `node_pool.tf` - AutoGlue node pool, labels, and taints
   - `variables.tf` - Module variables
   - `output.tf` - Module outputs
-  - `cloudinit/` - Cloud-init configuration files
 - `tests/` - `tofu test` suite for AMI selection (all providers mocked, no credentials needed: `tofu init && tofu test`)
 
 ## Usage
@@ -387,6 +386,7 @@ module "captain" {
 
 | Name | Source | Version |
 |------|--------|---------|
+| <a name="module_bastion_cloud_init"></a> [bastion\_cloud\_init](#module\_bastion\_cloud\_init) | git::https://github.com/GlueOps/opentofu-module-GlueKube-cloudinit.git | v0.2.0 |
 | <a name="module_cluster_metadata"></a> [cluster\_metadata](#module\_cluster\_metadata) | git::https://github.com/GlueOps/opentofu-module-autoglue-metadata.git | v0.0.2 |
 | <a name="module_node_pool"></a> [node\_pool](#module\_node\_pool) | ./modules/gluekube | n/a |
 | <a name="module_vpc"></a> [vpc](#module\_vpc) | terraform-aws-modules/vpc/aws | ~> 5.0 |
