@@ -4,6 +4,14 @@ resource "autoglue_ssh_key" "bastion" {
   comment = "GlueKube bastion SSH Key"
 }
 
+module "bastion_cloud_init" {
+  source = "git::https://github.com/GlueOps/opentofu-module-GlueKube-cloudinit.git?ref=v0.2.0"
+  count  = var.bastion.create ? 1 : 0
+
+  hostname   = "bastion"
+  public_key = autoglue_ssh_key.bastion[0].public_key
+}
+
 resource "aws_security_group" "bastion" {
   count       = var.bastion.create ? 1 : 0
   name        = "${var.autoglue.autoglue_cluster_name}-bastion-sg"
@@ -37,10 +45,7 @@ resource "aws_instance" "bastion" {
   subnet_id              = module.vpc.public_subnets[0]
   vpc_security_group_ids = [aws_security_group.bastion[0].id]
 
-  user_data_base64 = base64encode(templatefile("${path.module}/cloudinit/cloud-init-bastion.yaml", {
-    public_key = autoglue_ssh_key.bastion[0].public_key
-    hostname   = "bastion"
-  }))
+  user_data_base64 = base64encode(module.bastion_cloud_init[0].user_data)
 
   # Never replace the bastion because a newer AMI was published or the pin changed.
   lifecycle {

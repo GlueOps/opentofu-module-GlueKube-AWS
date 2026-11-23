@@ -69,6 +69,23 @@ resource "aws_security_group" "node_sg" {
   }
 }
 
+# The cloud-config shared with the Proxmox module. Only what is specific to this platform is
+# passed in; the update policy, the post-upgrade reboot and the `cluster` user live there.
+module "cloud_init" {
+  source   = "git::https://github.com/GlueOps/opentofu-module-GlueKube-cloudinit.git?ref=v0.2.0"
+  for_each = toset([for i in range(0, var.node_count) : tostring(i)])
+
+  hostname   = "${var.role}-${var.name}-${each.key}"
+  public_key = autoglue_ssh_key.ssh_key.public_key
+
+  # No qemu-guest-agent here: EC2 has no virtio-serial guest-agent port, so starting it waits ~90s
+  # for a device that never appears and then fails -- and as the last runcmd that failure would
+  # put cloud-init in status: error, which GlueKube's wait-for-cloud-init.yaml stops the run on.
+  extra_cloud_config = {
+    mounts = [["swap", null]]
+  }
+}
+
 resource "aws_instance" "cluster_node" {
   for_each               = toset([for i in range(0, var.node_count) : tostring(i)])
   ami                    = coalesce(var.image, var.default_image)
@@ -76,10 +93,7 @@ resource "aws_instance" "cluster_node" {
   subnet_id              = var.subnet_ids[tonumber(each.key) % length(var.subnet_ids)]
   vpc_security_group_ids = [aws_security_group.node_sg.id]
 
-  user_data_base64 = base64encode(templatefile("${path.module}/cloudinit/cloud-init.yaml", {
-    public_key = autoglue_ssh_key.ssh_key.public_key
-    hostname   = "${var.role}-${var.name}-${each.key}"
-  }))
+  user_data_base64 = base64encode(module.cloud_init[each.key].user_data)
 
   # A newer AMI or changed pin must never replace existing nodes; only new nodes use it.
   lifecycle {
