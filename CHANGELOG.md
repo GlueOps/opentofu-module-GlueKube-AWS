@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.6.0](https://github.com/GlueOps/opentofu-module-GlueKube-AWS/compare/v0.5.0...v0.6.0) (2026-11-23)
+
+
+### Features
+
+* use shared cloud-init module; disable auto-updates and always reboot after upgrade ([#72](https://github.com/GlueOps/opentofu-module-GlueKube-AWS/issues/72)) ([427ca25](https://github.com/GlueOps/opentofu-module-GlueKube-AWS/commit/427ca25235e3192ea7ab48fc7006fa9aa5a85a63))
+
+
+### Miscellaneous Chores
+
+* drop config:recommended from renovate.json ([#68](https://github.com/GlueOps/opentofu-module-GlueKube-AWS/issues/68)) ([76a87c0](https://github.com/GlueOps/opentofu-module-GlueKube-AWS/commit/76a87c0253922115952a021f79a2eebd9ded7c1d))
+
 ## [0.5.0](https://github.com/GlueOps/opentofu-module-GlueKube-AWS/compare/v0.4.1...v0.5.0) (2026-10-16)
 
 
